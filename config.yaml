@@ -1,0 +1,14 @@
+target:
+  path: '~/.local/share/dups'
+  host:
+  port: 22
+  username:
+  ssh_key_file: '~/.ssh/id_rsa'
+
+includes:
+
+excludes:
+
+logging:
+  dups: INFO
+  paramiko: 100
