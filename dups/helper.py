@@ -1,3 +1,4 @@
+import datetime
 import os
 from typing import Tuple
 
@@ -31,8 +32,8 @@ def notify(title, body='', icon='dialog-information'):
     utils.notify(title, body, icon)
 
 
-def get_backups():
-    """Get a list of all available backups.
+def get_backups(include_valid=True, include_invalid=True):
+    """Get a sorted list of all available backups.
 
     Returns:
         list: A sorted list of `backup.Backup`_ for the users configured
@@ -40,7 +41,8 @@ def get_backups():
     """
     io = get_io()
     return sorted(
-        backup.Backup.all_backups(io, CFG.target['path'], True, True))
+        backup.Backup.all_backups(io, CFG.target['path'], include_valid,
+                                  include_invalid))
 
 
 def print_backups():
@@ -140,3 +142,48 @@ def remove_backups(names, dry_run=False, background=False):
             b.remove()
 
         print('Successfully removed "{}"'.format(name))
+
+
+def remove_but_keep(keep, dry_run=False, background=False):
+    """Remove all but keep `keep` amount of the most recent backups.
+
+    Args:
+        keep (int): Amount of most recent backups to keep.
+        dry_run (bool): Whether or not to perform a trial run with no
+            changes made.
+        background (bool): Whether or not to instruct a daemon instance to
+            perform the restore.
+    """
+    if keep == 0:
+        names = list(b.name for b in get_backups())
+    else:
+        names = list(b.name for b in get_backups()[:-keep])
+
+    remove_backups(names, dry_run, background)
+
+
+def remove_older_than(duration, dry_run=False, background=False):
+    """Remove all backups older than the given `duration`.
+
+    Args:
+        duration (str): Remove backups older than this.
+            See `utils.duration_to_timedelta`_ for the format.
+        dry_run (bool): Whether or not to perform a trial run with no
+            changes made.
+        background (bool): Whether or not to instruct a daemon instance to
+            perform the restore.
+    """
+    try:
+        older_than = (
+            datetime.datetime.now() - utils.duration_to_timedelta(duration))
+    except ValueError:
+        print('Invalid duration specified.')
+        return
+
+    names = list()
+    for b in get_backups():
+        if b.datetime > older_than:
+            break
+        names.append(b.name)
+
+    remove_backups(names, dry_run, background)

@@ -70,6 +70,17 @@ def parse_args():
         '-r', '--remove', nargs='+', type=str,
         help='Remove the given backups. This can NOT be undone! '
         'Use "-l|--list" to get a list of available backups.')
+    remove_group.add_argument(
+        '--remove-but-keep', nargs='?', type=int,
+        help='Remove all but keep this many of most recent backups. '
+        'This can NOT be undone!')
+    remove_group.add_argument(
+        '--remove-older-than', nargs='?', type=str,
+        help='Remove all backups older than this where "this" referes to a '
+        'combination of a "number" and a "identifier". The identifier '
+        'can be one of "s" Seconds, "m" Minutes, "h" Hours, "d" Days or '
+        '"w" Weeks. e.g "1w" would refer to "1 week". '
+        'This can NOT be undone!')
 
     management_group.add_argument('-l', '--list', action='store_true',
                                   help='List all available backups.')
@@ -103,11 +114,11 @@ def parse_args():
         '-bg', '--background', action='store_true', default=False,
         help='Perform the given task in the background. A running daemon is '
         'required. See "--daemon". '
-        'Only applies to "--backup", "--restore" and "--remove".')
+        'Only applies to "--backup", "--restore" and all "remove" functions.')
     other_group.add_argument(
         '--dry-run', action='store_true', default=False,
-        help='Perform a trial run with no changes made. Only applies to '
-        '"--backup", "--restore" and "--remove".')
+        help='Perform a trial run with no changes made. '
+        'Only applies to "--backup", "--restore" and all "remove" functions.')
 
     return parser.parse_args()
 
@@ -185,6 +196,16 @@ def main():
 
     if args.remove:
         handle(helper.remove_backups, args.remove, args.dry_run,
+               args.background)
+        sys.exit(0)
+
+    if args.remove_but_keep is not None:
+        handle(helper.remove_but_keep, args.remove_but_keep, args.dry_run,
+               args.background)
+        sys.exit(0)
+
+    if args.remove_older_than:
+        handle(helper.remove_older_than, args.remove_older_than, args.dry_run,
                args.background)
         sys.exit(0)
 

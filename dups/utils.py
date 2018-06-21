@@ -1,3 +1,4 @@
+import datetime
 import errno
 import functools
 import os
@@ -50,6 +51,40 @@ def dict_merge(defaults, new):
             defaults[k] = new[k]
 
     return defaults
+
+
+def duration_to_timedelta(duration):
+    """Converts a `duration` into a timedelta object based on the following
+       scheme.
+
+       =========   ======= ===================
+       Character   Meaning Example
+       =========   ======= ===================
+       s           Seconds '60s' -> 60 Seconds
+       m           Minutes '5m'  -> 5 Minutes
+       h           Hours   '24h' -> 24 Hours
+       d           Days    '7d'  -> 7 Days
+       w           Weeks   '7w'  -> 7 Weeks
+       =========   ======= ===================
+
+    Returns:
+        datetime.timedelta
+    """
+    num = int(duration[:-1])
+    if duration.endswith('s'):
+        return datetime.timedelta(seconds=num)
+
+    elif duration.endswith('m'):
+        return datetime.timedelta(minutes=num)
+
+    elif duration.endswith('h'):
+        return datetime.timedelta(hours=num)
+
+    elif duration.endswith('d'):
+        return datetime.timedelta(days=num)
+
+    elif duration.endswith('w'):
+        return datetime.timedelta(weeks=num)
 
 
 def validate_absolute(func):
