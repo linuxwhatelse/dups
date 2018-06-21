@@ -1,0 +1,12 @@
+[Unit]
+Description=dups
+
+[Service]
+Type=dbus
+BusName=de.linuxwhatelse.dups
+ExecStart=/usr/bin/dups --daemon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

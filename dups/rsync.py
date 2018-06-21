@@ -1,32 +1,52 @@
-import subprocess
 import logging
-
-from typing import List
-
+import subprocess
+from typing import List, TypeVar
 
 LOGGER = logging.getLogger(__name__)
+_RSYNC = TypeVar('_RSYNC', bound='rsync')
 
 
-class Path:
+class Path(object):
+    """Represents a local or remote path to be used by `Rsync`_."""
+
     def __init__(self, path, host=None, port=22, username=None):
+        """Create a new instance of `Path`_.
+
+        Args:
+            path (str):
+            host (str):
+            port (int):
+            username (str):
+        """
         self.path = path
         self.host = host
         self.port = port
         self.username = username
 
+    @property
     def is_local(self):
+        """bool: Whether or not this `Path`_ refers to a local file."""
         return None in (self.host, self.port, self.username)
 
     @property
     def resolved_path(self):
+        """str: If local, the path origianlly provided <user>@<host>:<path>
+            otherwise.
+        """
         dest = self.path
-        if not self.is_local():
+        if not self.is_local:
             dest = '{user}@{host}:{dest}'.format(
                 user=self.username, host=self.host, dest=self.path)
         return dest
 
 
-class Status:
+class Status(object):
+    """Represents the status of a concluded rsync process.
+
+    Attributes:
+        EXIT_CODES (dict): All currently known rsync exist codes mapped to
+        their appropriate message.
+    """
     EXIT_CODES = {
         0: 'Success',
         1: 'Syntax or usage error',
@@ -56,6 +76,14 @@ class Status:
     _exit_code = 0
 
     def __init__(self, exit_code):
+        """Create a new instance of `Status`_.
+
+        Args:
+            exit_code (int): The exit code for this `Status`_.
+
+        Raises:
+            ValueError: If a invalid exit code was supplied.
+        """
         if exit_code not in self.EXIT_CODES:
             raise ValueError('Invalid exit code!')
         self._exit_code = exit_code
@@ -65,18 +93,23 @@ class Status:
 
     @property
     def exit_code(self):
+        """int: The exit code of this `Status`_."""
         return self._exit_code
 
     @property
     def message(self):
+        """str: The message of this `Status`_."""
         return self.EXIT_CODES[self._exit_code]
 
     @property
     def is_complete(self):
+        """bool: If this `Status`_ can be considered as completed sync."""
         return self._exit_code in (0, 23, 24)
 
 
 class rsync(object):
+    """Class to send/receive data using rsync."""
+
     __instance = None
 
     _proc = None
@@ -96,21 +129,23 @@ class rsync(object):
         rsync.__instance = None
 
     @classmethod
-    def get(cls):
+    def get(cls) -> _RSYNC:
+        """Get a instance of `rsync`_.
+
+        Returns:
+            rsync: A existing (or new if it's the first call)
+                instance of `rsync`_.
+        """
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance
 
     @property
     def cmd(self) -> list:
-        """The base rsync command used to sync"""
+        """str: The base rsync command used for synchronisation."""
         cmd = [
-            self.rsync_bin,
-            '--archive',
-            '--relative',
-            '--human-readable',
-            '--stats',
-            '--verbose'
+            self.rsync_bin, '--archive', '--relative', '--human-readable',
+            '--stats', '--verbose'
         ]
 
         if self.dry_run:
@@ -132,6 +167,17 @@ class rsync(object):
         return cmd
 
     def _exec(self, command):
+        """Execute the given comman.
+
+        Args:
+            command (list): List of arguments forming a full command.
+
+        Yields:
+            str: Each line of the commands output.
+
+        Raises:
+            RuntimeError: If a process is already running.
+        """
         if self._proc:
             raise RuntimeError('A process is already running!')
 
@@ -144,7 +190,7 @@ class rsync(object):
             self._exit_code = None
 
             for line in iter(proc.stdout.readline, ''):
-                yield line.rstrip('\n')
+                yield line.rstrip('\n').strip('"')
 
             proc.communicate()
             self._exit_code = proc.returncode
@@ -156,12 +202,26 @@ class rsync(object):
 
     def send(self, target: Path, includes, excludes=None,
              link_dest=None) -> Status:
+        """Send the given files to the given target.
+
+        Args:
+            target (Path): A instance of `Path`_ representing where to
+                synchronize to.
+            includes (list): List of files, folders, and patterns to include.
+            excludes (list): List of files, folders, and patterns to exclude.
+            link_dest (str): Absolute path to a directory used for hadlinks
+                in case files haven't changed.
+                If `None`_, don't link with a directory.
+
+        Returns:
+            Status: A instance of `Status`_.
+        """
         cmd = self.cmd
 
         if not excludes:
             excludes = list()
 
-        if not target.is_local():
+        if not target.is_local:
             cmd.extend(('-e', '{} -p {}'.format(self.ssh_bin, target.port)))
 
         includes = list('{}'.format(path) for path in includes)
@@ -181,14 +241,24 @@ class rsync(object):
 
         return Status(self._exit_code)
 
-    def receive(self, target: Path, includes: List[Path],
+    def receive(self, source: Path, includes: List[Path],
                 excludes=None) -> Status:
+        """Receive the given files from the given target.
+
+        Args:
+            source (Path): A instance of `Path`_ representing where to
+                synchronize from.
+            includes (list): List `Path`_ instances represeting files,
+                folders, and patterns to receive.
+            excludes (list): List files, folders, and patterns to exclude
+                while receiving.
+        """
         cmd = self.cmd
 
         includes = list(i.resolved_path for i in includes)
 
         cmd.extend(includes)
-        cmd.append(target.resolved_path)
+        cmd.append(source.resolved_path)
 
         for line in self._exec(cmd):
             LOGGER.info(line)

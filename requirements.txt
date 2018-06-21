@@ -1,2 +1,3 @@
+dbus-python
 paramiko
 ruamel.yaml

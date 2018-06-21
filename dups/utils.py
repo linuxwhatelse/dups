@@ -1,20 +1,42 @@
-import os
-import stat
 import errno
 import functools
+import os
+import shutil
+import stat
+from typing import TypeVar
 
 import paramiko
 
+from . import const
 
-SSH_KNOWN_HOSTS_PATH = os.path.expanduser('~/.ssh/known_hosts')
+import gi  # isort:skip
+gi.require_version('Notify', '0.7')  # isort:skip
+from gi.repository import Notify  # noqa: E402 isort:skip
+
+Notify.init(const.DBUS_NAME)
+
+_IO = TypeVar('_IO', bound='IO')
+
+
+def notify(title, body='', icon='dialog-information'):
+    """Send a new notification to a notification daemon.
+
+    Args:
+        title (str): The notifications title.
+        body (str): The notifications body.
+        icon (str): Name or path of the notifications icon.
+    """
+    noti = Notify.Notification.new(title, body, icon)
+    noti.set_app_name(const.APP_NAME)
+    noti.show()
 
 
 def dict_merge(defaults, new):
-    """Recursive merge of two dictionaries.
+    """Recursively merge two dictionaries.
 
     Args:
         defaults (dict): Default values.
-        new (dict): New values to merge into `defaults`_
+        new (dict): New values to merge into `defaults`.
 
     Returns:
         dict: Merged version of both dictionaries.
@@ -30,7 +52,9 @@ def dict_merge(defaults, new):
     return defaults
 
 
-def valide_absolute(func):
+def validate_absolute(func):
+    """Decorator which validates each argument if it's a absolute path."""
+
     @functools.wraps(func)
     def wrapper(*args):
         for arg in args:
@@ -39,38 +63,64 @@ def valide_absolute(func):
             if not os.path.isabs(arg):
                 raise ValueError('Should be an absolute path!')
         return func(*args)
+
     return wrapper
 
 
 class IO:
+    """Class to abstract simple file operations for local and sftp."""
     __instances = dict()
 
     _instance_key = None
 
-    _transport = None
+    _ssh = None
     _sftp = None
 
     def __init__(self, host=None, port=None, username=None, key_file=None):
-            if host and port:
-                if not key_file or not os.path.isfile(key_file):
-                    raise ValueError('Invalid ssh key file specified.')
+        """Create a new instance of `IO`_.
+           Using `IO.get`_ is the preferred method.
 
-            self._host = host
-            self._port = port
-            self._username = username
-            self._key_file = key_file
+        Args:
+            See `IO.get`_ for a description of the arguments.
 
-            self._connect_sftp(host, port, username, key_file)
+        Raises:
+            ValueError: If an invalid `key_file` was supplied while being
+                a remote instance.
+        """
+
+        self._host = host
+        self._port = port
+        self._username = username
+        self._key_file = key_file
+
+        if not self.is_local and (not key_file
+                                  or not os.path.isfile(key_file)):
+            raise ValueError('Invalid ssh key file specified.')
+
+        self._connect_remote()
 
     def __del__(self):
-        if self._transport:
-            self._transport.close()
+        if self._ssh:
+            self._ssh.close()
 
         if self._instance_key in IO.__instances:
             del IO.__instances[self._instance_key]
 
     @classmethod
-    def get(cls, host=None, port=None, username=None, key_file=None):
+    def get(cls, host=None, port=None, username=None, key_file=None) -> _IO:
+        """Get a instance of `IO`_ for the given arguments.
+
+        Args:
+            host (str): If remote, the host to connect to.
+            port (int): If remote, the port on which to connect to.
+            username (str): If remote, the username with wich to connect.
+            key_file (str): If remote, the absolute path a ssh private key
+                file to allow password-less authentication.
+
+        Returns:
+            IO: A existing (or new if it's the first call)
+                instance of `IO`_ for the given arguments.
+        """
         key = '{}_{}_{}_{}'.format(host, port, username, key_file)
 
         if key not in cls.__instances:
@@ -79,51 +129,66 @@ class IO:
         cls.__instances[key]._instance_key = key
         return cls.__instances[key]
 
-    def _connect_sftp(self, host, port, username, key_file=None):
-        try:
-            host_keys = paramiko.util.load_host_keys(SSH_KNOWN_HOSTS_PATH)
-            hostkeytype = host_keys[host].keys()[0]
-            hostkey = host_keys[host][hostkeytype]
+    def _connect_remote(self):
+        """Connect to the remote host."""
+        if self.is_local:
+            return
 
-        except IOError:
-            hostkey = None
+        self._ssh = paramiko.client.SSHClient()
 
-        self._transport = paramiko.Transport((host, port))
+        self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy)
+        self._ssh.load_system_host_keys()
 
-        if key_file:
-            ssh_key = paramiko.RSAKey.from_private_key_file(key_file)
-            self._transport.connect(hostkey, username, pkey=ssh_key)
-        else:
-            self._transport.connect(hostkey, username)
+        self._ssh.connect(self.host, self.port, self.username,
+                          key_filename=self.key_file)
 
-        self._sftp = paramiko.SFTPClient.from_transport(self._transport)
+        self._sftp = self._ssh.open_sftp()
 
     @property
     def host(self):
+        """str: The host provided while creating this instance."""
         return self._host
 
     @property
     def port(self):
+        """int: The port provided while creating this instance."""
         return self._port
 
     @property
     def username(self):
+        """str: The username provided while creating this instance."""
         return self._username
 
     @property
     def password(self):
+        """str: The password provided while creating this instance."""
         return self._password
 
     @property
     def key_file(self):
+        """str: The key_file provided while creating this instance."""
         return self._key_file
 
+    @property
     def is_local(self):
-        return self._sftp is None
+        """bool: Whether or not this is a local instance."""
+        return self._ssh is None
 
-    @valide_absolute
+    @validate_absolute
     def isfile(self, path):
-        if self.is_local():
+        """Test if the given path is a file.
+
+        Args:
+            path (str): Absolute path of the file to test.
+
+        Returns:
+            bool: `True` if the given path is a file, `False` otherwise.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            FileNotFoundError: If the given path does not exist.
+        """
+        if self.is_local:
             return os.path.isfile(path)
 
         try:
@@ -131,9 +196,22 @@ class IO:
         except FileNotFoundError:
             return False
 
-    @valide_absolute
+    @validate_absolute
     def islink(self, path):
-        if self.is_local():
+        """Test if the given path is a symbolic link.
+
+        Args:
+            path (str): Absolute path of the file to test.
+
+        Returns:
+            bool: `True` if the given path is a symbolic link, `False`
+                otherwise.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            FileNotFoundError: If the given path does not exist.
+        """
+        if self.is_local:
             return os.path.islink(path)
 
         try:
@@ -141,9 +219,22 @@ class IO:
         except FileNotFoundError:
             return False
 
-    @valide_absolute
+    @validate_absolute
     def isdir(self, path):
-        if self.is_local():
+        """Test if the given path is a directory.
+
+        Args:
+            path (str): Absolute path of the file to test.
+
+        Returns:
+            bool: `True` if the given path is a symbolic link, `False`
+                otherwise.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            FileNotFoundError: If the given path does not exist.
+        """
+        if self.is_local:
             return os.path.isdir(path)
 
         try:
@@ -151,13 +242,31 @@ class IO:
         except FileNotFoundError:
             return False
 
-    @valide_absolute
+    @validate_absolute
     def listdir(self, path):
-        if self.is_local():
+        """List the contents of the given path.
+
+        Args:
+            path (str): Absolute path of the directory to list.
+
+        Returns:
+            list: All items found in the given directory.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            FileNotFoundError: If the given path does not exist.
+            AttributeError: If the given path is not a directory.
+        """
+        if self.is_local:
             return os.listdir(path)
         return self._sftp.listdir(path)
 
     def __sftp_walk(self, remotepath):
+        """Implements `os.path.walk`_ behaviour for sftp.
+
+        Yields:
+            tuple: A 3-tuple (dirpath, dirnames, filenames).
+        """
         path = remotepath
         files, folders = list(), list()
 
@@ -173,45 +282,97 @@ class IO:
             for x in self.__sftp_walk(new_path):
                 yield x
 
-    @valide_absolute
+    @validate_absolute
     def walk(self, path):
-        if self.is_local():
-            yield from os.path.walk()
+        """Generate the file names in a directory tree by walking the tree.
+
+        Yields:
+            tuple: A 3-tuple (dirpath, dirnames, filenames).
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+
+        if self.is_local:
+            yield from os.walk(path)
         else:
             yield from self.__sftp_walk(path)
 
-    @valide_absolute
+    @validate_absolute
     def mkdir(self, path):
-        if self.is_local():
+        """Create a directory named `path`_.
+
+        Args:
+            path (str): Path which to create.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
             return os.mkdir(path)
         return self._sftp.mkdir(path)
 
-    @valide_absolute
+    @validate_absolute
     def makedirs(self, path):
-        if self.is_local():
-            return os.makedirs(path)
+        """Recursively create directories.
+
+        Args:
+            path (str): Path which to create.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
+            return os.makedirs(path, exist_ok=True)
 
         current = '/'
+        # TODO: maybe use os.path.split
         for p in path.split('/'):
             current = os.path.join(current, p)
             if self.exists(current):
                 continue
             self._sftp.mkdir(current)
 
-    def symlink(self, source, link_name):
-        if self.is_local():
-            return os.symlink(source, link_name)
-        return self._sftp.symlink(source, link_name)
+    @validate_absolute
+    def symlink(self, src, dst):
+        """Create a symbolic link pointing to src named dst.
 
-    @valide_absolute
+        Args:
+            src (str): Source for the symbolic link.
+            dst (str): Destination for the symbolic link.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
+            return os.symlink(src, dst)
+        return self._sftp.symlink(src, dst)
+
+    @validate_absolute
     def touch(self, path):
-        if self.is_local():
+        """Creates an empty file named path.
+
+        Args:
+            path (str): File path to create.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
             return open(path, 'a').close()
         return self._sftp.open(path, 'a').close()
 
-    @valide_absolute
+    @validate_absolute
     def exists(self, path):
-        if self.is_local():
+        """Test whether the given path exists.
+
+        Args:
+            path (str): Path which to test.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
             return os.path.exists(path)
 
         try:
@@ -219,29 +380,54 @@ class IO:
         except IOError as e:
             if e.errno == errno.ENOENT:
                 return False
+
         return True
 
-    @valide_absolute
+    @validate_absolute
     def remove(self, path):
-        if self.is_local():
+        """Remove the given file path.
+
+        Args:
+            path (str): File path which to remove.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            OSError: If path is a directory.
+        """
+        if self.is_local:
             return os.remove(path)
         return self._sftp.remove(path)
 
-    @valide_absolute
+    @validate_absolute
     def rmdir(self, path):
-        if self.is_local():
+        """Remove the given directory path.
+
+        Args:
+            path (str): Directory path which to remove.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            OSError: If the directory is not empty.
+        """
+        if self.is_local:
             return os.rmdir(path)
         return self._sftp.rmdir(path)
 
-    @valide_absolute
+    @validate_absolute
     def rrmdir(self, path):
-        for f in self.listdir(path):
-            filepath = os.path.join(path, f)
+        """Remove the entire directory tree.
+           On remote connections `rm -rf` is used for performance reasons.
 
-            if self.isfile(filepath) or self.islink(filepath):
-                self.remove(filepath)
+        Args:
+            path (str): Directory path which to remove.
 
-            elif self.isdir(filepath):
-                self.rrmdir(filepath)
+        Raises:
+            ValueError: If the given path is not absolute.
+        """
+        if self.is_local:
+            return shutil.rmtree(path)
 
-        self.rmdir(path)
+        # Using `IO.walk` to delete all files/folders is EXTREMLY slow
+        # over sftp (even to localhost connections).
+        stdin, stdout, stderr = self._ssh.exec_command(
+            'rm -rf \'{}\''.format(path))

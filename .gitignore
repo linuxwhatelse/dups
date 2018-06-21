@@ -2,5 +2,10 @@
 /.venv
 /tmp
 
+# setuptools build files
+/build
+/dist
+/dups.egg-info
+
 *.py[co]
 

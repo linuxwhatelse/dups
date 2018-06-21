@@ -1,0 +1,60 @@
+target:
+  # Path (local or remote) to where to store the backups.
+  path: '~/.local/share/dups'
+
+  # Target host on which to store the backup. Leave empty if local backup
+  # is desired.
+  host:
+
+  # Target port on which to store the backup.
+  port: 22
+
+  # Username as which to connect to the remote host. Leave emtpy if local
+  # backup is desired.
+  username:
+
+  # Path to the SSH key file to use for authentication.
+  ssh_key_file: '~/.ssh/id_rsa'
+
+# Whether or not the daemon should post notifications.
+notify: True
+
+rsync:
+  # Where the rsync binary is located.
+  rsync_bin: '/usr/bin/rsync'
+
+  # Where the ssh binary is located.
+  ssh_bin: '/usr/bin/ssh'
+
+  # Whether or not to preserve ACLs.
+  acls: True
+
+  # Whether or not to preserve extended attributes.
+  xattrs: True
+
+  # Whether or not to prune empty directory chains from file-list.
+  prune_empty_dirs: True
+
+  # Output format for rsync.
+  # See the "log format" setting in the rsyncd.conf manpage.
+  out_format: "%t %f %''b"
+
+# Loglevel for individual modules.
+# Valid options are: DEBUG, INFO, WARNING, ERROR
+logging:
+  dups: INFO
+  paramiko: 100
+
+includes:
+  # Format: <file/folder/pattern>: <type>
+  # e.g.
+  #
+  # /etc/fstab: file
+  # /boot/loader: folder
+
+excludes:
+  # Format: <file/folder/pattern>: <type>
+  # e.g.
+  #
+  # '*.tar*': pattern
+
