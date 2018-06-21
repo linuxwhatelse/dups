@@ -1,6 +1,8 @@
 import datetime
 import errno
 import functools
+import logging
+import logging.handlers
 import os
 import shutil
 import stat
@@ -8,7 +10,7 @@ from typing import TypeVar
 
 import paramiko
 
-from . import const
+from . import config, const
 
 import gi  # isort:skip
 gi.require_version('Notify', '0.7')  # isort:skip
@@ -17,6 +19,26 @@ from gi.repository import Notify  # noqa: E402 isort:skip
 Notify.init(const.DBUS_NAME)
 
 _IO = TypeVar('_IO', bound='IO')
+
+
+def add_logging_handler(file_name):
+    """Add logging handler for all configured loggers.
+
+    Args:
+        file_name (str): The file name to write logs into.
+    """
+    cfg = config.Config.get()
+
+    logfile = os.path.join(const.CACHE_DIR, file_name)
+    do_rollover = os.path.exists(logfile)
+
+    handler = logging.handlers.RotatingFileHandler(logfile, backupCount=7)
+
+    if do_rollover:
+        handler.doRollover()
+
+    for name, level in cfg.logging.items():
+        logging.getLogger(name).addHandler(handler)
 
 
 def notify(title, body='', icon='dialog-information'):

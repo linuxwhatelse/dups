@@ -73,6 +73,8 @@ def create_backup(dry_run=False,
         client.backup(dry_run)
         return None, None
     else:
+        utils.add_logging_handler('backup.log')
+
         io = get_io()
         bak = backup.Backup.new(io, CFG.target['path'])
         status = bak.backup(CFG.includes.keys(), CFG.excludes.keys(), dry_run)
@@ -116,6 +118,8 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
         client.restore(items, name, target, dry_run)
         return None, None
     else:
+        utils.add_logging_handler('restore.log')
+
         status = bak.restore(target, items, dry_run)
         return bak, status
 
