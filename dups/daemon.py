@@ -33,7 +33,9 @@ class Daemon(dbus.service.Object):
 
         bus = dbus.SessionBus()
         try:
-            dbus.service.BusName(const.DBUS_NAME, bus, do_not_queue=True)
+            # Needs to be assigned
+            name = dbus.service.BusName(  # noqa: F841
+                const.DBUS_NAME, bus, do_not_queue=True)
 
         except dbus.NameExistsException:
             print('A instance is already running.')
