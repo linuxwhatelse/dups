@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-DUPS="../../run.py"
+DUPS="../../bin/dups"
 README="../../README.md"
 TEMPLATE="../../README.md.template"
 

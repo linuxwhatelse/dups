@@ -36,7 +36,7 @@ setup(
     python_requires='~=3.5',
     packages=find_packages(),
     include_package_data=True,  # Reads from MANIFEST.in
-    entry_points={'console_scripts': ['dups= dups.__main__:main']},
+    scripts=['bin/dups'],
     install_requires=get_requirements(),
     zip_safe=False,
 )
