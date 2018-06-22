@@ -18,7 +18,7 @@ class Config:
         """Create a new config instance.
            Using `Config.get`_ is the preferred way.
         """
-        self._reload()
+        self.reload()
 
     @classmethod
     def get(cls):
@@ -32,7 +32,7 @@ class Config:
             cls.__instance = cls()
         return cls.__instance
 
-    def _reload(self):
+    def reload(self):
         """Reload the config data from file."""
         with Config.__lock:
             config_data = dict()
@@ -52,7 +52,7 @@ class Config:
 
             self._data = utils.dict_merge(template_data, config_data)
 
-    def _save(self):
+    def save(self):
         """Save the current configuration to file."""
         with Config.__lock:
             yaml = ruamel.yaml.YAML()
@@ -128,7 +128,7 @@ class Config:
                 of includes.
         """
         self._add_list_data('includes', values)
-        self._save()
+        self.save()
 
     def remove_includes(self, values):
         """Remove the given items from the list of includes.
@@ -138,7 +138,7 @@ class Config:
                 list of includes.
         """
         self._remove_list_data('includes', values)
-        self._save()
+        self.save()
 
     @property
     def excludes(self):
@@ -155,7 +155,7 @@ class Config:
                 of excludes.
         """
         self._add_list_data('excludes', values)
-        self._save()
+        self.save()
 
     def remove_excludes(self, values):
         """Remove the given items from the list of excludes.
@@ -165,7 +165,7 @@ class Config:
                 list of excludes.
         """
         self._remove_list_data('excludes', values)
-        self._save()
+        self.save()
 
     @property
     def notify(self):
