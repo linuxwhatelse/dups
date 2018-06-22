@@ -111,7 +111,7 @@ def parse_args():
         '-bg', '--background', action='store_true', default=False,
         help='Perform the given task in the background. A running daemon is '
         'required. See "--daemon". '
-        'Only applies to "--backup", "--restore" and all "remove" functions.')
+        'Only applies to "--backup" and "--restore".')
     other_group.add_argument(
         '--dry-run', action='store_true', default=False,
         help='Perform a trial run with no changes made. '
@@ -190,18 +190,15 @@ def main():
         sys.exit(0)
 
     if args.remove:
-        handle(helper.remove_backups, args.remove, args.dry_run,
-               args.background)
+        handle(helper.remove_backups, args.remove, args.dry_run)
         sys.exit(0)
 
     if args.remove_but_keep is not None:
-        handle(helper.remove_but_keep, args.remove_but_keep, args.dry_run,
-               args.background)
+        handle(helper.remove_but_keep, args.remove_but_keep, args.dry_run)
         sys.exit(0)
 
     if args.remove_older_than:
-        handle(helper.remove_older_than, args.remove_older_than, args.dry_run,
-               args.background)
+        handle(helper.remove_older_than, args.remove_older_than, args.dry_run)
         sys.exit(0)
 
     if args.include:

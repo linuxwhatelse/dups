@@ -124,15 +124,13 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
         return bak, status
 
 
-def remove_backups(names, dry_run=False, background=False):
+def remove_backups(names, dry_run=False):
     """Remove the given backups based on the users configuration.
 
     Args:
         names (list): List of Names of backups to remove.
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
-        background (bool): Whether or not to instruct a daemon instance to
-            perform the restore.
     """
     io = get_io()
     for name in names:
@@ -148,25 +146,23 @@ def remove_backups(names, dry_run=False, background=False):
         print('Successfully removed "{}"'.format(name))
 
 
-def remove_but_keep(keep, dry_run=False, background=False):
+def remove_but_keep(keep, dry_run=False, ):
     """Remove all but keep `keep` amount of the most recent backups.
 
     Args:
         keep (int): Amount of most recent backups to keep.
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
-        background (bool): Whether or not to instruct a daemon instance to
-            perform the restore.
     """
     if keep == 0:
         names = list(b.name for b in get_backups())
     else:
         names = list(b.name for b in get_backups()[:-keep])
 
-    remove_backups(names, dry_run, background)
+    remove_backups(names, dry_run)
 
 
-def remove_older_than(duration, dry_run=False, background=False):
+def remove_older_than(duration, dry_run=False):
     """Remove all backups older than the given `duration`.
 
     Args:
@@ -174,8 +170,6 @@ def remove_older_than(duration, dry_run=False, background=False):
             See `utils.duration_to_timedelta`_ for the format.
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
-        background (bool): Whether or not to instruct a daemon instance to
-            perform the restore.
     """
     try:
         older_than = (
@@ -190,4 +184,4 @@ def remove_older_than(duration, dry_run=False, background=False):
             break
         names.append(b.name)
 
-    remove_backups(names, dry_run, background)
+    remove_backups(names, dry_run)
