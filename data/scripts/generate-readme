@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-DUPS="../../bin/dups"
+DUPS="../../run"
 README="../../README.md"
 TEMPLATE="../../README.md.template"
 
