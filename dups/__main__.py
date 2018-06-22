@@ -37,7 +37,9 @@ def parse_args():
     Returns:
         argparse.Namespace: The parsed commandline arguments.
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        const.APP_NAME,
+        description='It deduplicates things - Backup as simple as possible.')
 
     backup_group = parser.add_argument_group('Backup')
     restore_group = parser.add_argument_group('Restore')

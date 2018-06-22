@@ -4,15 +4,17 @@ It deduplicates things - Backup as simple as possible.
 
 ## Usage
 ```text
-usage: run.py [-h] [-B] [-R [NAME]] [--items ITEMS [ITEMS ...]]
-              [--target TARGET] [-r REMOVE [REMOVE ...]]
-              [--remove-but-keep [REMOVE_BUT_KEEP]]
-              [--remove-older-than [REMOVE_OLDER_THAN]] [-l]
-              [-i INCLUDE [INCLUDE ...]] [-li]
-              [-ri REMOVE_INCLUDES [REMOVE_INCLUDES ...]]
-              [-e EXCLUDE [EXCLUDE ...]] [-le]
-              [-re REMOVE_EXCLUDES [REMOVE_EXCLUDES ...]] [--daemon] [-bg]
-              [--dry-run]
+usage: dups [-h] [-B] [-R [NAME]] [--items ITEMS [ITEMS ...]]
+            [--target TARGET] [-r REMOVE [REMOVE ...]]
+            [--remove-but-keep [REMOVE_BUT_KEEP]]
+            [--remove-older-than [REMOVE_OLDER_THAN]] [-l]
+            [-i INCLUDE [INCLUDE ...]] [-li]
+            [-ri REMOVE_INCLUDES [REMOVE_INCLUDES ...]]
+            [-e EXCLUDE [EXCLUDE ...]] [-le]
+            [-re REMOVE_EXCLUDES [REMOVE_EXCLUDES ...]] [--daemon] [-bg]
+            [--dry-run]
+
+It deduplicates things - Backup as simple as possible.
 
 optional arguments:
   -h, --help            show this help message and exit
