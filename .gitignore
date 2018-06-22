@@ -7,5 +7,9 @@
 /dist
 /dups.egg-info
 
+/data/pkg/archlinux/*
+!/data/pkg/archlinux/PKGBUILD
+!/data/pkg/archlinux/dups.install
+
 *.py[co]
 
