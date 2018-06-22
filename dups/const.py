@@ -3,11 +3,20 @@ Constant variables used throught the application.
 
 Attributes:
     HERE (str): Absolute path to the source directory of dups.
+
     APP_NAME (str): Name of the application.
+    APP_ICON (str): Name of the applications icon.
+
+    NOTIFICATION_ICON_SUCCESS (str): Notification icon for successful backups.
+    NOTIFICATION_ICON_ERROR (str): 'Notification icon for failed backups.
+
     CONFIG_PATH (str): Absolute path to the users config file.
     CONFIG_TEMPLATE_PATH (str): Absolute path to the template config file.
+
     CACHE_DIR (str): Absolute path to the cache directory.
+
     DEFAULT_RESTORE_PATH (str): Path to the default restore directory.
+
     DBUS_NAME (str): Name used to register with dbus.
     DBUS_PATH (str): Path used to register with dbus.
 """
@@ -16,6 +25,10 @@ import os
 HERE = os.path.dirname(os.path.realpath(__file__))
 
 APP_NAME = 'dups'
+APP_ICON = 'deja-dup'  # Until we have our own icon
+
+NOTIFICATION_ICON_SUCCESS = 'sync-synchronizing'
+NOTIFICATION_ICON_ERROR = 'sync-error'
 
 CONFIG_PATH = os.path.expanduser('~/.config/dups.yaml')
 CONFIG_TEMPLATE_PATH = os.path.join(HERE, 'data', 'config.yaml')

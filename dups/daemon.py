@@ -68,10 +68,16 @@ class Daemon(dbus.service.Object):
             try:
                 helper.notify('Starting new backup')
                 bak, status = helper.create_backup(dry_run)
-                helper.notify('Finished backup', status.message)
+
+                if status.is_complete:
+                    icon = const.NOTIFICATION_ICON_SUCCESS
+                else:
+                    icon = const.NOTIFICATION_ICON_ERROR
+
+                helper.notify('Finished backup', status.message, icon)
 
             except RuntimeError as e:
-                utils.notify('Coulnd\'t start backup', e)
+                utils.notify('Coulnd\'t start backup', e, 'sync-error')
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
@@ -97,7 +103,12 @@ class Daemon(dbus.service.Object):
                 helper.notify('Starting restore')
                 bak, status = helper.restore_backup(items, name, target,
                                                     dry_run)
-                helper.notify('Finished restore', status.message)
+                if status.is_complete:
+                    icon = const.NOTIFICATION_ICON_SUCCESS
+                else:
+                    icon = const.NOTIFICATION_ICON_ERROR
+
+                helper.notify('Finished restore', status.message, icon)
 
             except RuntimeError as e:
                 utils.notify('Coulnd\'t start restore', e)

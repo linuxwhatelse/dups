@@ -2,7 +2,7 @@ import datetime
 import os
 from typing import Tuple
 
-from . import backup, config, daemon, exceptions, rsync, utils
+from . import backup, config, const, daemon, exceptions, rsync, utils
 
 CFG = config.Config.get()
 
@@ -18,7 +18,7 @@ def get_io():
                         key_file=t['ssh_key_file'])
 
 
-def notify(title, body='', icon='dialog-information'):
+def notify(title, body=None, icon=const.APP_ICON):
     """Send a new notification to a notification daemon unless configured
        otherwise by the user.
 
@@ -29,7 +29,7 @@ def notify(title, body='', icon='dialog-information'):
     """
     if not CFG.notify:
         return
-    utils.notify(title, body, icon)
+    utils.notify(title, body, icon, const.APP_NAME)
 
 
 def get_backups(include_valid=True, include_invalid=True):
@@ -113,7 +113,7 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
         target = os.path.abspath(target)
 
     if background:
-        name = bak.label
+        name = bak.name
         client = daemon.Client.get()
         client.restore(items, name, target, dry_run)
         return None, None

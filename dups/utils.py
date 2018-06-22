@@ -41,7 +41,7 @@ def add_logging_handler(file_name):
         logging.getLogger(name).addHandler(handler)
 
 
-def notify(title, body='', icon='dialog-information'):
+def notify(title, body=None, icon=None, app_name=None):
     """Send a new notification to a notification daemon.
 
     Args:
@@ -50,7 +50,8 @@ def notify(title, body='', icon='dialog-information'):
         icon (str): Name or path of the notifications icon.
     """
     noti = Notify.Notification.new(title, body, icon)
-    noti.set_app_name(const.APP_NAME)
+    if app_name:
+        noti.set_app_name(app_name)
     noti.show()
 
 
