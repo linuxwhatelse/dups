@@ -8,7 +8,7 @@ import dbus.mainloop.glib
 import dbus.service
 import gi.repository.GLib
 
-from . import const, helper, utils
+from . import const, helper, utils, config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +66,8 @@ class Daemon(dbus.service.Object):
 
         def _backup():
             try:
+                config.Config.get().reload()
+
                 helper.notify('Starting new backup')
                 bak, status = helper.create_backup(dry_run)
 
@@ -100,6 +102,8 @@ class Daemon(dbus.service.Object):
 
         def _restore():
             try:
+                config.Config.get().reload()
+
                 helper.notify('Starting restore')
                 bak, status = helper.restore_backup(items, name, target,
                                                     dry_run)
