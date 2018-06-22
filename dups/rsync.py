@@ -48,6 +48,7 @@ class Status(object):
         their appropriate message.
     """
     EXIT_CODES = {
+        # rsync
         0: 'Success',
         1: 'Syntax or usage error',
         2: 'Protocol incompatibility',
@@ -71,6 +72,9 @@ class Status(object):
         25: 'The --max-delete limit stopped deletions',
         30: 'Timeout in data send/receive',
         35: 'Timeout waiting for daemon connection',
+
+        # ssh
+        255: 'Could not resolve hostname'
     }
 
     _exit_code = 0
@@ -85,7 +89,7 @@ class Status(object):
             ValueError: If a invalid exit code was supplied.
         """
         if exit_code not in self.EXIT_CODES:
-            raise ValueError('Invalid exit code!')
+            raise ValueError('Invalid exit code "{}"!'.format(exit_code))
         self._exit_code = exit_code
 
     def __str__(self):
