@@ -230,7 +230,7 @@ class IO:
     @property
     def is_local(self):
         """bool: Whether or not this is a local instance."""
-        return self._ssh is None
+        return None in (self._host, self._port, self._username)
 
     @validate_absolute
     def isfile(self, path):
