@@ -1,4 +1,5 @@
 import os
+import threading
 
 import ruamel.yaml
 
@@ -9,6 +10,8 @@ class Config:
     """Class to represent dups config."""
 
     __instance = None
+    __lock = threading.RLock()
+
     _data = None
 
     def __init__(self):
@@ -31,30 +34,32 @@ class Config:
 
     def _reload(self):
         """Reload the config data from file."""
-        config_data = dict()
-        if os.path.isfile(const.CONFIG_PATH):
-            with open(const.CONFIG_PATH, 'r') as f:
-                config_data = ruamel.yaml.YAML(typ='safe').load(f.read())
-        else:
-            dir_ = os.path.dirname(const.CONFIG_PATH)
-            if not os.path.exists(dir_):
-                os.makedirs(dir_)
+        with Config.__lock:
+            config_data = dict()
+            if os.path.isfile(const.CONFIG_PATH):
+                with open(const.CONFIG_PATH, 'r') as f:
+                    config_data = ruamel.yaml.YAML(typ='safe').load(f.read())
+            else:
+                dir_ = os.path.dirname(const.CONFIG_PATH)
+                if not os.path.exists(dir_):
+                    os.makedirs(dir_)
 
-            return
+                return
 
-        template_data = dict()
-        with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
-            template_data = ruamel.yaml.YAML(typ='safe').load(f.read())
+            template_data = dict()
+            with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
+                template_data = ruamel.yaml.YAML(typ='safe').load(f.read())
 
-        self._data = utils.dict_merge(template_data, config_data)
+            self._data = utils.dict_merge(template_data, config_data)
 
     def _save(self):
         """Save the current configuration to file."""
-        yaml = ruamel.yaml.YAML()
-        yaml.indent(mapping=2, sequence=4, offset=2)
+        with Config.__lock:
+            yaml = ruamel.yaml.YAML()
+            yaml.indent(mapping=2, sequence=4, offset=2)
 
-        with open(const.CONFIG_PATH, 'w+') as f:
-            yaml.dump(self._data, f)
+            with open(const.CONFIG_PATH, 'w+') as f:
+                yaml.dump(self._data, f)
 
     def _add_list_data(self, key, values):
         """Add the given values to the list identified by the given key.
