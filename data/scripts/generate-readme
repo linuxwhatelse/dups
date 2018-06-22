@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+cd "$(dirname "$0")"
+
+DUPS="../../run.py"
+README="../../README.md"
+TEMPLATE="../../README.md.template"
+
+data=$(cat "$TEMPLATE")
+
+# Replace tags within the template
+help_text=$($DUPS -h)
+data="${data/"[[ help ]]"/$help_text}"
+
+# Upate the README
+echo "$data" > "$README"

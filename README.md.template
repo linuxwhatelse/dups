@@ -1,0 +1,8 @@
+dups
+====
+It deduplicates things - Backup as simple as possible.
+
+## Usage
+```text
+[[ help ]]
+```
