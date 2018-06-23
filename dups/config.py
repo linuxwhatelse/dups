@@ -44,8 +44,6 @@ class Config:
                 if not os.path.exists(dir_):
                     os.makedirs(dir_)
 
-                return
-
             template_data = dict()
             with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
                 template_data = ruamel.yaml.YAML(typ='safe').load(f.read())
