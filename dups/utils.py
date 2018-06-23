@@ -487,5 +487,7 @@ class IO:
 
         # Using `IO.walk` to delete all files/folders is EXTREMLY slow
         # over sftp (even to localhost connections).
-        stdin, stdout, stderr = self._ssh.exec_command(
-            'rm -rf \'{}\''.format(path))
+        res = self._ssh.exec_command('rm -rf \'{}\''.format(path))
+
+        # Block until execution finished
+        res[1].channel.recv_exit_status()
