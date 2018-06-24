@@ -137,6 +137,9 @@ def handle(callback, *args, **kwargs):
     except paramiko.ssh_exception.SSHException as e:
         print(e)
 
+    except paramiko.ssh_exception.NoValidConnectionsError as e:
+        print(e)
+
     except KeyError as e:
         print('Unable to connect to {}'.format(e))
 
@@ -146,6 +149,9 @@ def handle(callback, *args, **kwargs):
 
     except exceptions.BackupNotFoundException as e:
         print(e)
+
+    except KeyboardInterrupt:
+        print('Process canceled.')
 
     except Exception as e:
         print('Something unforeseen happend. Try increasing the log-level.')
