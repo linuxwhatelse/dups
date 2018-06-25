@@ -52,7 +52,13 @@ def notify(title, body=None, icon=None, app_name=None):
     noti = Notify.Notification.new(title, body, icon)
     if app_name:
         noti.set_app_name(app_name)
-    noti.show()
+    try:
+        noti.show()
+    except Exception:
+        # Gnome  (and maybe others) throw weird erros which we have to
+        # catch for now:
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
+        pass
 
 
 def dict_merge(defaults, new):
