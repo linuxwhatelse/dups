@@ -83,6 +83,13 @@ class Daemon(dbus.service.Object):
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
+            except Exception:
+                # Gnome  (and maybe others) throw weird erros which we have to
+                # catch for now:
+                # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
+                LOGGER.info(e)
+                LOGGER.debug(traceback.format_exc())
+
         threading.Thread(target=_backup).start()
 
     @dbus.service.method(const.DBUS_NAME, in_signature='asssb')
@@ -116,6 +123,13 @@ class Daemon(dbus.service.Object):
 
             except RuntimeError as e:
                 utils.notify('Coulnd\'t start restore', e)
+                LOGGER.info(e)
+                LOGGER.debug(traceback.format_exc())
+
+            except Exception:
+                # Gnome  (and maybe others) throw weird erros which we have to
+                # catch for now:
+                # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
