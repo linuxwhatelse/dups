@@ -13,10 +13,10 @@ class Path(object):
         """Create a new instance of `Path`_.
 
         Args:
-            path (str):
-            host (str):
-            port (int):
-            username (str):
+            path (str): Path to the local/remote file/folder.
+            host (str): The hostname if it's a remote item.
+            port (int): The port if it's a remote item.
+            username (str): The username if it's a remote item.
         """
         self.path = path
         self.host = host
@@ -30,8 +30,9 @@ class Path(object):
 
     @property
     def resolved_path(self):
-        """str: If local, the path origianlly provided <user>@<host>:<path>
-            otherwise.
+        """str: If local, the path origianlly provided. If remote,
+           either <host>:<path> or <user>@<host>:<path> depending on if a
+           username exists.
         """
         if self.is_local:
             return self.path
