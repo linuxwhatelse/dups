@@ -12,5 +12,11 @@ data=$(cat "$TEMPLATE")
 help_text=$($DUPS -h)
 data="${data/"[[ help ]]"/$help_text}"
 
+req_sys=$(cat "../../dependencies.txt")
+data="${data/"[[ req-sys ]]"/$req_sys}"
+
+req_py=$(cat "../../requirements.txt")
+data="${data/"[[ req-py ]]"/$req_py}"
+
 # Upate the README
 echo "$data" > "$README"

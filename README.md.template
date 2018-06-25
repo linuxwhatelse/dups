@@ -2,7 +2,45 @@ dups
 ====
 It deduplicates things - Backup as simple as possible.
 
+As there was no linux backup solution that was simple and
+_to the point_-enough to fit my needs, I decided to write my own.
+
+**dups** is powered by `rsync` using the amazing `--link-dest` option to
+save space **and** time when backing up.
+
+What this does is it creates [hard links](https://en.wikipedia.org/wiki/Hard_link) to **unchanged** files from the
+previous backup meaning they don't have to be transfered again **and** do not
+take up additional disk space.
+
+Another priority of mine was the ability to acces backups without any special
+software.
+As each backup is just a _dumb_ replication of your local content, this is
+easily achieved.
+
+
+## Requirements
+### System dependencies
+```
+[[ req-sys ]]
+```
+
+### Python dependencies
+```
+[[ req-py ]]
+```
+
+## Installation
+### archlinux
+There's a package in the aur: [dups-git](https://aur.archlinux.org/packages/dups-git/)
+
+### Other
+```sh
+pip install git+https://github.com/linuxwhatelse/dups
+```
+
 ## Usage
+For the time being, here's the help text.
 ```text
 [[ help ]]
 ```
+
