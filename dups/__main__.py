@@ -1,11 +1,14 @@
 import argparse
 import logging
 import sys
+import traceback
 
 import dbus
 import paramiko
 
 from . import config, const, daemon, exceptions, helper, rsync
+
+LOGGER = logging.getLogger(__name__)
 
 
 def configure_logger():
@@ -136,16 +139,18 @@ def handle(callback, *args, **kwargs):
 
     except paramiko.ssh_exception.SSHException as e:
         print(e)
+        LOGGER.debug(traceback.format_exc())
 
     except paramiko.ssh_exception.NoValidConnectionsError as e:
         print(e)
+        LOGGER.debug(traceback.format_exc())
 
     except KeyError as e:
         print('Unable to connect to {}'.format(e))
 
     except dbus.exceptions.DBusException as e:
         print('Unable to connect to daemon. Is one running?')
-        print(e)
+        LOGGER.debug(traceback.format_exc())
 
     except exceptions.BackupNotFoundException as e:
         print(e)
@@ -156,6 +161,7 @@ def handle(callback, *args, **kwargs):
     except Exception as e:
         print('Something unforeseen happend. Try increasing the log-level.')
         print(e)
+        LOGGER.debug(traceback.format_exc())
 
     sys.exit(1)
 
