@@ -1,5 +1,8 @@
 dups
 ====
+
+**Even though I actively use `dups` already, it should still be considered alpha!**
+
 It deduplicates things - Backup as simple as possible.
 
 As there was no linux backup solution that was simple and
@@ -28,6 +31,12 @@ easily achieved.
 ```
 [[ req-py ]]
 ```
+
+
+## Todo
+- [ ] Unit tests
+- [ ] Remove old backups based on the [GFS](https://en.wikipedia.org/wiki/Backup_rotation_scheme#Grandfather-father-son) rotation scheme
+- [ ] Logo/App icon preferably fitting the [Paper Icon Theme](https://snwh.org/paper) (help wanted)
 
 
 ## Installation
