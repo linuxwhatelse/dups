@@ -109,6 +109,9 @@ class Config:
         if t['ssh_key_file']:
             t['ssh_key_file'] = os.path.expanduser(t['ssh_key_file'])
 
+        if t['ssh_config_file']:
+            t['ssh_config_file'] = os.path.expanduser(t['ssh_config_file'])
+
         return t
 
     @property

@@ -134,7 +134,8 @@ class IO:
     _ssh = None
     _sftp = None
 
-    def __init__(self, host=None, port=None, username=None, key_file=None):
+    def __init__(self, host=None, port=None, username=None, config_file=None,
+                 key_file=None):
         """Create a new instance of `IO`_.
            Using `IO.get`_ is the preferred method.
 
@@ -149,11 +150,8 @@ class IO:
         self._host = host
         self._port = port
         self._username = username
+        self._config_file = config_file
         self._key_file = key_file
-
-        if not self.is_local and (not key_file
-                                  or not os.path.isfile(key_file)):
-            raise ValueError('Invalid ssh key file specified.')
 
         self._connect_remote()
 
@@ -165,7 +163,8 @@ class IO:
             del IO.__instances[self._instance_key]
 
     @classmethod
-    def get(cls, host=None, port=None, username=None, key_file=None) -> _IO:
+    def get(cls, host=None, port=None, username=None, config_file=None,
+            key_file=None) -> _IO:
         """Get a instance of `IO`_ for the given arguments.
 
         Args:
@@ -179,10 +178,11 @@ class IO:
             IO: A existing (or new if it's the first call)
                 instance of `IO`_ for the given arguments.
         """
-        key = '{}_{}_{}_{}'.format(host, port, username, key_file)
+        key = '{}_{}_{}_{}'.format(host, port, username, config_file, key_file)
 
         if key not in cls.__instances:
-            cls.__instances[key] = cls(host, port, username, key_file)
+            cls.__instances[key] = cls(host, port, username, config_file,
+                                       key_file)
 
         cls.__instances[key]._instance_key = key
         return cls.__instances[key]
@@ -196,6 +196,27 @@ class IO:
 
         self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy)
         self._ssh.load_system_host_keys()
+
+        ssh_config = paramiko.SSHConfig()
+
+        cfg = {
+            'hostname': self.host,
+            'port': self.port,
+            'user': self.username,
+            'identityfile': self.key_file
+        }
+
+        if self.config_file:
+            if os.path.exists(self.config_file):
+                with open(self.config_file) as f:
+                    ssh_config.parse(f)
+
+            cfg = {**cfg, **ssh_config.lookup(self.host)}
+
+        self._host = cfg['hostname']
+        self._port = cfg['port']
+        self._username = cfg['user']
+        self._key_file = cfg['identityfile']
 
         self._ssh.connect(self.host, self.port, self.username,
                           key_filename=self.key_file)
@@ -223,6 +244,11 @@ class IO:
         return self._password
 
     @property
+    def config_file(self):
+        """str: The key_file provided while creating this instance."""
+        return self._config_file
+
+    @property
     def key_file(self):
         """str: The key_file provided while creating this instance."""
         return self._key_file
@@ -230,7 +256,7 @@ class IO:
     @property
     def is_local(self):
         """bool: Whether or not this is a local instance."""
-        return None in (self._host, self._port, self._username)
+        return self._host is None
 
     @validate_absolute
     def isfile(self, path):

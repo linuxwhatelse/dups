@@ -15,6 +15,7 @@ def get_io():
     """
     t = CFG.target
     return utils.IO.get(t['host'], t['port'], t['username'],
+                        config_file=t['ssh_config_file'],
                         key_file=t['ssh_key_file'])
 
 
@@ -146,7 +147,7 @@ def remove_backups(names, dry_run=False):
         print('Successfully removed "{}"'.format(name))
 
 
-def remove_but_keep(keep, dry_run=False, ):
+def remove_but_keep(keep, dry_run=False):
     """Remove all but keep `keep` amount of the most recent backups.
 
     Args:

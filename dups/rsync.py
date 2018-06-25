@@ -9,7 +9,7 @@ _RSYNC = TypeVar('_RSYNC', bound='rsync')
 class Path(object):
     """Represents a local or remote path to be used by `Rsync`_."""
 
-    def __init__(self, path, host=None, port=22, username=None):
+    def __init__(self, path, host=None, port=None, username=None):
         """Create a new instance of `Path`_.
 
         Args:
@@ -26,17 +26,20 @@ class Path(object):
     @property
     def is_local(self):
         """bool: Whether or not this `Path`_ refers to a local file."""
-        return None in (self.host, self.port, self.username)
+        return self.host is None
 
     @property
     def resolved_path(self):
         """str: If local, the path origianlly provided <user>@<host>:<path>
             otherwise.
         """
-        dest = self.path
-        if not self.is_local:
-            dest = '{user}@{host}:{dest}'.format(
-                user=self.username, host=self.host, dest=self.path)
+        if self.is_local:
+            return self.path
+
+        dest = '{host}:{dest}'.format(host=self.host, dest=self.path)
+        if self.username:
+            dest = '{user}@{dest}'.format(user=self.username, dest=dest)
+
         return dest
 
 
@@ -225,7 +228,7 @@ class rsync(object):
         if not excludes:
             excludes = list()
 
-        if not target.is_local:
+        if not target.is_local and target.port:
             cmd.extend(('-e', '{} -p {}'.format(self.ssh_bin, target.port)))
 
         includes = list('{}'.format(path) for path in includes)
