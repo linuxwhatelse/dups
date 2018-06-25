@@ -41,7 +41,7 @@ rsync:
 
   # Output format for rsync.
   # See the "log format" setting in the rsyncd.conf manpage.
-  out_format: "%t %f %''b"
+  out_format: "%t %i %f %''b"
 
 # Loglevel for individual modules.
 # Valid options are: DEBUG, INFO, WARNING, ERROR
