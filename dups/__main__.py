@@ -6,7 +6,7 @@ import traceback
 import dbus
 import paramiko
 
-from . import config, const, daemon, exceptions, helper, rsync
+from . import config, const, daemon, exceptions, helper, rsync, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -175,8 +175,11 @@ def main():
     configure_rsync()
 
     if args.daemon:
+        utils.save_env()
         daemon.Daemon.run()
         sys.exit(0)
+
+    utils.load_env()
 
     if args.backup:
         bak, status = handle(helper.create_backup, args.dry_run,

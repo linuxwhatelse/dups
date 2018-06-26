@@ -1,6 +1,7 @@
 import datetime
 import errno
 import functools
+import json
 import logging
 import logging.handlers
 import os
@@ -49,6 +50,7 @@ def notify(title, body=None, icon=None, app_name=None):
         body (str): The notifications body.
         icon (str): Name or path of the notifications icon.
     """
+    # ToDo:Implement notification urgency
     noti = Notify.Notification.new(title, body, icon)
     if app_name:
         noti.set_app_name(app_name)
@@ -59,6 +61,28 @@ def notify(title, body=None, icon=None, app_name=None):
         # catch for now:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
         pass
+
+
+def save_env():
+    """Write all currently known environment variables to the cache dir."""
+    with open(const.ENV_PATH, 'w+') as f:
+        f.write(json.dumps(dict(os.environ)))
+
+
+def load_env():
+    """Read all environment variables from the cache dir to the current
+       environment."""
+    if not os.path.isfile(const.ENV_PATH):
+        return
+
+    with open(const.ENV_PATH, 'r') as f:
+        try:
+            env = json.loads(f.read())
+        except json.decoder.JSONDecodeError:
+            env = None
+
+    if env:
+        os.environ.update(env)
 
 
 def dict_merge(defaults, new):
