@@ -78,8 +78,8 @@ class Daemon(dbus.service.Object):
 
                 helper.notify('Finished backup', status.message, icon)
 
-            except RuntimeError as e:
-                utils.notify('Coulnd\'t start backup', e, 'sync-error')
+            except Exception as e:
+                utils.notify('Coulnd\'t start backup', str(e), 'sync-error')
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
@@ -114,8 +114,8 @@ class Daemon(dbus.service.Object):
 
                 helper.notify('Finished restore', status.message, icon)
 
-            except RuntimeError as e:
-                utils.notify('Coulnd\'t start restore', e)
+            except Exception as e:
+                utils.notify('Coulnd\'t start restore', str(e))
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
