@@ -19,7 +19,7 @@ def get_io():
                         key_file=t['ssh_key_file'])
 
 
-def notify(title, body=None, icon=const.APP_ICON):
+def notify(title, body=None, icon=const.APP_ICON, urgency=None):
     """Send a new notification to a notification daemon unless configured
        otherwise by the user.
 
@@ -27,10 +27,12 @@ def notify(title, body=None, icon=const.APP_ICON):
         title (str): The notifications title.
         body (str): The notifications body.
         icon (str): Name or path of the notifications icon.
+        urgency (utils.NUrgency): The notifications urgency level.
     """
     if not CFG.notify:
         return
-    utils.notify(title, body, icon, const.APP_NAME)
+
+    utils.notify(title, body, icon, urgency, const.APP_NAME)
 
 
 def get_backups(include_valid=True, include_invalid=True):

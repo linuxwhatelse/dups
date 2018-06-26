@@ -22,6 +22,12 @@ Notify.init(const.DBUS_NAME)
 _IO = TypeVar('_IO', bound='IO')
 
 
+class NUrgency:
+    LOW = Notify.Urgency.LOW
+    NORMAL = Notify.Urgency.NORMAL
+    CRITICAL = Notify.Urgency.CRITICAL
+
+
 def add_logging_handler(file_name):
     """Add logging handler for all configured loggers.
 
@@ -42,18 +48,25 @@ def add_logging_handler(file_name):
         logging.getLogger(name).addHandler(handler)
 
 
-def notify(title, body=None, icon=None, app_name=None):
+def notify(title, body=None, icon=None, urgency=None, app_name=None):
     """Send a new notification to a notification daemon.
 
     Args:
         title (str): The notifications title.
         body (str): The notifications body.
+        urgency (NUrgency): The notifications urgency level.
         icon (str): Name or path of the notifications icon.
     """
-    # ToDo:Implement notification urgency
     noti = Notify.Notification.new(title, body, icon)
+
+    if urgency is None:
+        urgency = NUrgency.NORMAL
+
+    noti.set_urgency(urgency)
+
     if app_name:
         noti.set_app_name(app_name)
+
     try:
         noti.show()
     except Exception:

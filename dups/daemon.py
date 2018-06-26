@@ -8,7 +8,7 @@ import dbus.mainloop.glib
 import dbus.service
 import gi.repository.GLib
 
-from . import const, helper, utils, config
+from . import config, const, helper, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,7 +79,8 @@ class Daemon(dbus.service.Object):
                 helper.notify('Finished backup', status.message, icon)
 
             except Exception as e:
-                utils.notify('Coulnd\'t start backup', str(e), 'sync-error')
+                helper.notify('Coulnd\'t start backup', str(e), 'sync-error',
+                              utils.NUrgency.CRITICAL)
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
@@ -112,10 +113,11 @@ class Daemon(dbus.service.Object):
                 else:
                     icon = const.NOTIFICATION_ICON_ERROR
 
-                helper.notify('Finished restore', status.message, icon)
+                helper.notify('Finished restore', status.message, icon,
+                              utils.NUrgency.CRITICAL)
 
             except Exception as e:
-                utils.notify('Coulnd\'t start restore', str(e))
+                helper.notify('Coulnd\'t start restore', str(e))
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
