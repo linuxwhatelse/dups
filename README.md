@@ -25,8 +25,24 @@ easily achieved.
 ## Requirements
 ### System dependencies
 ```
-rsync>=2.6.7
+# Package names may varry on your system
+
+# Based on Archlinux
+python
+openssh
+rsync
+dbus
 libnotify
+python-gobject
+
+# Based on Debian Stretch
+python3
+openssh-client
+rsync
+dbus
+libdbus-1-dev
+libnotify-dev
+python3-gi
 ```
 
 ### Python dependencies
