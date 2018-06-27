@@ -1,5 +1,6 @@
 dups
 ====
+[![Build Status](https://travis-ci.org/linuxwhatelse/dups.svg?branch=master)](https://travis-ci.org/linuxwhatelse/dups)
 
 **Even though I actively use `dups` already, it should still be considered alpha!**
 
