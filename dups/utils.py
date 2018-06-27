@@ -324,29 +324,6 @@ class IO:
             return False
 
     @validate_absolute
-    def islink(self, path):
-        """Test if the given path is a symbolic link.
-
-        Args:
-            path (str): Absolute path of the file to test.
-
-        Returns:
-            bool: `True` if the given path is a symbolic link, `False`
-                otherwise.
-
-        Raises:
-            ValueError: If the given path is not absolute.
-            FileNotFoundError: If the given path does not exist.
-        """
-        if self.is_local:
-            return os.path.islink(path)
-
-        try:
-            return stat.S_ISLNK(self._sftp.lstat(path).st_mode)
-        except FileNotFoundError:
-            return False
-
-    @validate_absolute
     def isdir(self, path):
         """Test if the given path is a directory.
 
@@ -388,43 +365,6 @@ class IO:
             return os.listdir(path)
         return self._sftp.listdir(path)
 
-    def __sftp_walk(self, remotepath):
-        """Implements `os.path.walk`_ behaviour for sftp.
-
-        Yields:
-            tuple: A 3-tuple (dirpath, dirnames, filenames).
-        """
-        path = remotepath
-        files, folders = list(), list()
-
-        for f in self._sftp.listdir_attr(remotepath):
-            if stat.S_ISDIR(f.st_mode):
-                folders.append(f.filename)
-            else:
-                files.append(f.filename)
-
-        yield path, folders, files
-        for folder in folders:
-            new_path = os.path.join(remotepath, folder)
-            for x in self.__sftp_walk(new_path):
-                yield x
-
-    @validate_absolute
-    def walk(self, path):
-        """Generate the file names in a directory tree by walking the tree.
-
-        Yields:
-            tuple: A 3-tuple (dirpath, dirnames, filenames).
-
-        Raises:
-            ValueError: If the given path is not absolute.
-        """
-
-        if self.is_local:
-            yield from os.walk(path)
-        else:
-            yield from self.__sftp_walk(path)
-
     @validate_absolute
     def mkdir(self, path):
         """Create a directory named `path`_.
@@ -459,21 +399,6 @@ class IO:
             if self.exists(current):
                 continue
             self._sftp.mkdir(current)
-
-    @validate_absolute
-    def symlink(self, src, dst):
-        """Create a symbolic link pointing to src named dst.
-
-        Args:
-            src (str): Source for the symbolic link.
-            dst (str): Destination for the symbolic link.
-
-        Raises:
-            ValueError: If the given path is not absolute.
-        """
-        if self.is_local:
-            return os.symlink(src, dst)
-        return self._sftp.symlink(src, dst)
 
     @validate_absolute
     def touch(self, path):
