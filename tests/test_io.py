@@ -1,11 +1,12 @@
+import context  # noqa: F401, isort:skip
+
 import os
 import shutil
 import unittest
 
 import paramiko
-from dups import utils
 
-import context  # noqa: F401
+from dups import utils
 
 
 class Test_IO(unittest.TestCase):
@@ -24,8 +25,9 @@ class Test_IO(unittest.TestCase):
         self.assertTrue(not self.io_remote.is_local)
 
     def test_invalid_remote(self):
-        self.assertRaises(paramiko.ssh_exception.NoValidConnectionsError,
-                          utils.IO.get, context.SSH_HOST, 0)
+        self.assertRaises(
+            (OSError, paramiko.ssh_exception.NoValidConnectionsError),
+            utils.IO.get, context.SSH_HOST, 23)
 
     def test_validate_absolute(self):
         @utils.validate_absolute

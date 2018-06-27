@@ -1,0 +1,16 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - |
+    docker build --pull --cache-from linuxwhatelse/dups \
+      --tag linuxwhatelse/dups .
+
+script:
+  - |
+    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups \
+      bash -c "/usr/sbin/sshd && \
+        /usr/bin/python3 -m unittest discover -s /dups/tests"
+
