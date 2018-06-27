@@ -237,7 +237,7 @@ class IO:
 
         self._ssh = paramiko.client.SSHClient()
 
-        self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy)
+        self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         self._ssh.load_system_host_keys()
 
         ssh_config = paramiko.SSHConfig()
