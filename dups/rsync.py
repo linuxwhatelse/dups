@@ -23,6 +23,10 @@ class Path(object):
         self.port = port
         self.username = username
 
+        if self.host and (not self.port or not self.username):
+            raise ValueError(
+                'If `host` is set, both `port` and `username` are required.')
+
     @property
     def is_local(self):
         """bool: Whether or not this `Path`_ refers to a local file."""
