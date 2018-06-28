@@ -1,16 +1,24 @@
+env:
+  matrix:  
+    - DOCKERFILE=docker/Dockerfile.bionic
+      PYTHON=python3
+    - DOCKERFILE=docker/Dockerfile.arch
+      PYTHON=python
+
 sudo: required
+
+language: generic
 
 services:
   - docker
 
 install:
   - |
-    docker build --pull --cache-from linuxwhatelse/dups \
-      --tag linuxwhatelse/dups .
+    docker build -f ${DOCKERFILE} --pull --tag linuxwhatelse/dups .
 
 script:
   - |
     docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups \
-      bash -c "/usr/sbin/sshd && \
-        python3 -m unittest discover -v -s /dups/tests"
+      bash -c "/usr/bin/ssh-keygen -A && /usr/sbin/sshd && \
+        ${PYTHON} -m unittest discover -v -s /dups/tests"
 

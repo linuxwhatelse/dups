@@ -1,0 +1,20 @@
+FROM base/archlinux
+
+RUN pacman -Sy
+
+# prep dependencies
+RUN pacman -S --noconfirm \
+    openssh python
+
+RUN mkdir /var/run/sshd
+
+# dups system dependencies
+RUN pacman -S  --noconfirm \
+    rsync dbus libnotify python-gobject
+
+# dups python requirements
+RUN pacman -S --noconfirm \
+    python-dbus python-paramiko python-ruamel-yaml
+
+COPY tests/.ssh /root/.ssh
+RUN chmod -R 700 /root/.ssh
