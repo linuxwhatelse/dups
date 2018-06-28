@@ -4,7 +4,6 @@ import os
 import shutil
 import unittest
 
-import paramiko
 from dups import rsync
 
 import utils as test_utils
@@ -94,8 +93,8 @@ class Test_rsync(unittest.TestCase):
 
         # Send the files
         target = rsync.Path(context.TMP_DIR)
-        status = sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
-                           excludes=['**/dir2/.gitkeep'])
+        sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
+                  excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
         synced_data = test_utils.get_dir_struct(self.real_target)
@@ -112,8 +111,8 @@ class Test_rsync(unittest.TestCase):
         # Send the files
         target = rsync.Path(context.TMP_DIR, context.SSH_HOST,
                             context.SSH_PORT, context.SSH_USER)
-        status = sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
-                           excludes=['**/dir2/.gitkeep'])
+        sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
+                  excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
         synced_data = test_utils.get_dir_struct(self.real_target)
@@ -130,8 +129,8 @@ class Test_rsync(unittest.TestCase):
 
         # Send the files
         target = rsync.Path(context.TMP_DIR)
-        status = sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
-                           excludes=['**/dir2/.gitkeep'])
+        sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
+                  excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
         synced_data = test_utils.get_dir_struct(self.real_target)
