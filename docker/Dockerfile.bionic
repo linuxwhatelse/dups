@@ -3,8 +3,8 @@ FROM ubuntu:bionic
 RUN apt-get update
 
 # prep dependencies
-RUN apt-get install -y --no-install-recommends \
-    openssh-server python3
+RUN apt-get install -y \
+    openssh-server python3 python3-pip
 
 RUN mkdir /var/run/sshd
 
@@ -18,3 +18,5 @@ RUN apt-get install --no-install-recommends -y \
 
 COPY tests/.ssh /root/.ssh
 RUN chmod -R 700 /root/.ssh
+
+RUN /usr/bin/ssh-keygen -A

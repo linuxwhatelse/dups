@@ -4,7 +4,7 @@ RUN pacman -Sy
 
 # prep dependencies
 RUN pacman -S --noconfirm \
-    openssh python
+    base-devel openssh python python-pip
 
 RUN mkdir /var/run/sshd
 
@@ -18,3 +18,5 @@ RUN pacman -S --noconfirm \
 
 COPY tests/.ssh /root/.ssh
 RUN chmod -R 700 /root/.ssh
+
+RUN /usr/bin/ssh-keygen -A

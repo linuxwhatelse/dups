@@ -2,8 +2,11 @@ env:
   matrix:  
     - DOCKERFILE=docker/Dockerfile.bionic
       PYTHON=python3
+      PIP=pip3
+
     - DOCKERFILE=docker/Dockerfile.arch
       PYTHON=python
+      PIP=pip
 
 sudo: required
 
@@ -18,7 +21,10 @@ install:
 
 script:
   - |
-    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups \
-      bash -c "/usr/bin/ssh-keygen -A && /usr/sbin/sshd && \
-        ${PYTHON} -m unittest discover -v -s /dups/tests"
+    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups bash -c \
+      "${PIP} install /dups && dups --help"
+
+  - |
+    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups bash -c \
+      "/usr/sbin/sshd && ${PYTHON} -m unittest discover -v -s /dups/tests"
 
