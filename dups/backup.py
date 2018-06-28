@@ -258,7 +258,7 @@ class Backup(object):
         target = rsync.Path(self.backup_data_dir, self._io.host, self._io.port,
                             self._io.username)
         sync = rsync.rsync.get()
-        status = sync.send(target, items, excludes, link_dest)
+        status = sync.sync(target, items, excludes, link_dest)
 
         if not dry_run and status.is_complete:
             self.set_valid(True)
@@ -307,7 +307,7 @@ class Backup(object):
                 rsync.Path(item, self._io.host, self._io.port,
                            self._io.username))
 
-        status = sync.receive(target, sources)
+        status = sync.sync(target, sources)
 
         return status
 

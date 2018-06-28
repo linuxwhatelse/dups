@@ -1,6 +1,6 @@
 import logging
 import subprocess
-from typing import List, TypeVar
+from typing import List, TypeVar, Union
 
 LOGGER = logging.getLogger(__name__)
 _RSYNC = TypeVar('_RSYNC', bound='rsync')
@@ -209,14 +209,15 @@ class rsync(object):
 
         self._proc = None
 
-    def send(self, target: Path, includes, excludes=None,
-             link_dest=None) -> Status:
+    def sync(self, target: Path, includes: [List[str], List[Path]],
+             excludes=None, link_dest=None) -> Status:
         """Send the given files to the given target.
 
         Args:
             target (Path): A instance of `Path`_ representing where to
                 synchronize to.
-            includes (list): List of files, folders, and patterns to include.
+            includes (list|Path): List of files, folders, and patterns to
+                include.
             excludes (list): List of files, folders, and patterns to exclude.
             link_dest (str): Absolute path to a directory used for hadlinks
                 in case files haven't changed.
@@ -233,7 +234,8 @@ class rsync(object):
         if not target.is_local and target.port:
             cmd.extend(('-e', '{} -p {}'.format(self.ssh_bin, target.port)))
 
-        includes = list('{}'.format(path) for path in includes)
+        includes = list(
+            i.resolved_path if isinstance(i, Path) else i for i in includes)
         excludes = list('--exclude={}'.format(path) for path in excludes)
 
         if link_dest:
@@ -244,30 +246,6 @@ class rsync(object):
         cmd.extend(excludes)
 
         cmd.append(target.resolved_path)
-
-        for line in self._exec(cmd):
-            LOGGER.info(line)
-
-        return Status(self._exit_code)
-
-    def receive(self, source: Path, includes: List[Path],
-                excludes=None) -> Status:
-        """Receive the given files from the given target.
-
-        Args:
-            source (Path): A instance of `Path`_ representing where to
-                synchronize from.
-            includes (list): List `Path`_ instances represeting files,
-                folders, and patterns to receive.
-            excludes (list): List files, folders, and patterns to exclude
-                while receiving.
-        """
-        cmd = self.cmd
-
-        includes = list(i.resolved_path for i in includes)
-
-        cmd.extend(includes)
-        cmd.append(source.resolved_path)
 
         for line in self._exec(cmd):
             LOGGER.info(line)
