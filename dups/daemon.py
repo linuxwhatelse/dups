@@ -70,16 +70,10 @@ class Daemon(dbus.service.Object):
 
                 helper.notify('Starting new backup')
                 bak, status = helper.create_backup(dry_run)
-
-                if status.is_complete:
-                    icon = const.NOTIFICATION_ICON_SUCCESS
-                else:
-                    icon = const.NOTIFICATION_ICON_ERROR
-
-                helper.notify('Finished backup', status.message, icon)
+                helper.notify('Finished backup', status.message)
 
             except Exception as e:
-                helper.notify('Coulnd\'t start backup', str(e), 'sync-error',
+                helper.notify('Coulnd\'t start backup', str(e),
                               utils.NUrgency.CRITICAL)
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
@@ -108,16 +102,11 @@ class Daemon(dbus.service.Object):
                 helper.notify('Starting restore')
                 bak, status = helper.restore_backup(items, name, target,
                                                     dry_run)
-                if status.is_complete:
-                    icon = const.NOTIFICATION_ICON_SUCCESS
-                else:
-                    icon = const.NOTIFICATION_ICON_ERROR
-
-                helper.notify('Finished restore', status.message, icon,
-                              utils.NUrgency.CRITICAL)
+                helper.notify('Finished restore', status.message)
 
             except Exception as e:
-                helper.notify('Coulnd\'t start restore', str(e))
+                helper.notify('Coulnd\'t start restore', str(e),
+                              utils.NUrgency.CRITICAL)
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 

@@ -48,7 +48,7 @@ def add_logging_handler(file_name):
         logging.getLogger(name).addHandler(handler)
 
 
-def notify(title, body=None, icon=None, urgency=None, app_name=None):
+def notify(title, body=None, urgency=None, icon=None, app_name=None):
     """Send a new notification to a notification daemon.
 
     Args:
@@ -56,6 +56,7 @@ def notify(title, body=None, icon=None, urgency=None, app_name=None):
         body (str): The notifications body.
         urgency (NUrgency): The notifications urgency level.
         icon (str): Name or path of the notifications icon.
+        app_name (str): Name for the app posting this notification.
     """
     noti = Notify.Notification.new(title, body, icon)
 
