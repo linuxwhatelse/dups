@@ -26,7 +26,7 @@ class Path(object):
     @property
     def is_local(self):
         """bool: Whether or not this `Path`_ refers to a local file."""
-        return self.host is None
+        return self.host in ('', None)
 
     @property
     def resolved_path(self):
