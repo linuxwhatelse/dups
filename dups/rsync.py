@@ -137,9 +137,6 @@ class rsync(object):
 
     dry_run = True
 
-    def __del__(self):
-        rsync.__instance = None
-
     @classmethod
     def get(cls) -> _RSYNC:
         """Get a instance of `rsync`_.
