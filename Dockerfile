@@ -1,11 +1,10 @@
-FROM python:3.6-stretch
+FROM ubuntu:bionic
 
 RUN apt-get update
 
 # prep dependencies
-RUN apt-get install --no-install-recommends -y \
-    openssh-server
-#    openssh-server python3-pip
+RUN apt-get install -y --no-install-recommends \
+    openssh-server python3
 
 RUN mkdir /var/run/sshd
 
