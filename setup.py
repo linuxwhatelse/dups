@@ -39,6 +39,4 @@ setup(
     scripts=['bin/dups'],
     install_requires=get_requirements(),
     zip_safe=False,
-    data_files=[
-        ('/usr/lib/systemd/user', ['data/systemd/dups.service']),
-    ])
+)
