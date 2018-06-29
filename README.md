@@ -26,24 +26,28 @@ easily achieved.
 ## Requirements
 ### System dependencies
 ```
-# Package names may varry on your system
+# Package-names may varry on your system
 
 # Based on Archlinux
-python
 openssh
 rsync
 dbus
 libnotify
 python-gobject
+python-dbus
+python-paramiko
+python-ruamel-yaml
 
-# Based on Debian Stretch
-python3
+# Based on Ubuntu bionic
 openssh-client
 rsync
-dbus
-libdbus-1-dev
+dbu
 libnotify-dev
 python3-gi
+libdbus-1-dev
+python3-dbus
+python3-paramiko
+python3-ruamel.yaml
 ```
 
 ### Python dependencies
@@ -53,7 +57,7 @@ dbus-python
 paramiko
 ruamel.yaml>=0.15.0
 
-# Unittest
+# Unittests
 ddt
 ```
 
