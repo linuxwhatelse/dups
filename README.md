@@ -1,5 +1,6 @@
 dups
 ====
+[![Say Thanks!](https://img.shields.io/badge/say-thanks-e91e63.svg)](https://saythanks.io/to/tadly)
 [![Build Status](https://travis-ci.org/linuxwhatelse/dups.svg?branch=master)](https://travis-ci.org/linuxwhatelse/dups)
 
 **Even though I actively use `dups` already, it should still be considered alpha!**
@@ -49,7 +50,7 @@ python3-gi
 ```
 dbus-python
 paramiko
-ruamel.yaml
+ruamel.yaml>=0.15.0
 ```
 
 
