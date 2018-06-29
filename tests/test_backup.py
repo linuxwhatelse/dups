@@ -52,6 +52,8 @@ class Test_Backup(unittest.TestCase):
         except Exception as e:
             self.fail(str(e))
 
+        io.close()
+
     @data('local', 'remote')
     def test_from_label(self, target):
         io = self.get_io(target)
@@ -67,6 +69,8 @@ class Test_Backup(unittest.TestCase):
                           backup.Backup.from_name, io, self.missing_backup,
                           context.BACKUP_DIR)
 
+        io.close()
+
     @data('local', 'remote')
     def test_all_backups(self, target):
         io = self.get_io(target)
@@ -80,6 +84,8 @@ class Test_Backup(unittest.TestCase):
         self.assertCountEqual(
             [self.get_valid(io), self.get_invalid(io)], backups)
 
+        io.close()
+
     @data('local', 'remote')
     def test_latest(self, target):
         io = self.get_io(target)
@@ -91,6 +97,8 @@ class Test_Backup(unittest.TestCase):
         # Get the latest backup including invalid ones
         bak = backup.Backup.latest(io, context.BACKUP_DIR, True, True)
         self.assertEqual(self.get_invalid(io), bak)
+
+        io.close()
 
     @data('local', 'remote')
     def test_backup(self, target):
@@ -113,6 +121,8 @@ class Test_Backup(unittest.TestCase):
         synced_data = test_utils.get_dir_struct(real_data_dir)
         self.assertEqual(expected_data, synced_data)
 
+        io.close()
+
     @data('local', 'remote')
     def test_backup_dry_run(self, target):
         io = self.get_io(target)
@@ -123,6 +133,8 @@ class Test_Backup(unittest.TestCase):
 
         self.assertEqual(status.exit_code, 0)
         self.assertTrue(not os.path.exists(bak.backup_dir))
+
+        io.close()
 
     @data('local', 'remote')
     def test_restore_items(self, target):
@@ -140,6 +152,8 @@ class Test_Backup(unittest.TestCase):
         synced_data = test_utils.get_dir_struct(context.TMP_DIR)
         self.assertEqual(expected_data, synced_data)
 
+        io.close()
+
     @data('local', 'remote')
     def test_restore_full(self, target):
         io = self.get_io(target)
@@ -153,6 +167,8 @@ class Test_Backup(unittest.TestCase):
         synced_data = test_utils.get_dir_struct(context.TMP_DIR)
         self.assertEqual(expected_data, synced_data)
 
+        io.close()
+
     @data('local', 'remote')
     def test_restore_dry_run(self, target):
         io = self.get_io(target)
@@ -162,6 +178,8 @@ class Test_Backup(unittest.TestCase):
 
         self.assertEqual(status.exit_code, 0)
         self.assertTrue(not os.path.exists(context.TMP_DIR))
+
+        io.close()
 
     @data('local', 'remote')
     def test_remove(self, target):
@@ -173,6 +191,8 @@ class Test_Backup(unittest.TestCase):
         self.assertTrue(os.path.exists(bak.backup_data_dir))
         bak.remove()
         self.assertTrue(not os.path.exists(bak.backup_data_dir))
+
+        io.close()
 
 
 if __name__ == '__main__':
