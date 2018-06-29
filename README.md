@@ -212,13 +212,13 @@ On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/)
 
 ### How do I automate backups?
 Currently using cron.  
-I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if your PC was turned off or suspended, tasks will still be run.
+I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if your PC was turned off or suspended, tasks will still be run afterwards.
 
 A cron entry could look something like:
 ```sh
 # This starts a backup at 20:00 and does:
 #   1. Wait up to 5 minutes for a valid network connection
-#   2. Remove all backups older than 13 days
+#   2. Remove all but keep 13 backups
 #   3. Start a new backup in the background
 0 20 * * * nm-online -q -t 300; dups --remove-but-keep 13; dups --background --backup
 ```
