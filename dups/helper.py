@@ -1,5 +1,6 @@
 import datetime
 import os
+from contextlib import contextmanager
 from typing import Tuple
 
 from . import backup, config, const, daemon, exceptions, rsync, utils
@@ -7,8 +8,9 @@ from . import backup, config, const, daemon, exceptions, rsync, utils
 CFG = config.Config.get()
 
 
-def get_io():
+def get_configured_io():
     """Get a `io.IO`_ instance based on the users configuration.
+       Better use `configured_io`_ to automatically close sessions.
 
     Returns:
         io.IO: A instance of `io.IO`_.
@@ -17,6 +19,27 @@ def get_io():
     return utils.IO.get(t['host'], t['port'], t['username'],
                         config_file=t['ssh_config_file'],
                         key_file=t['ssh_key_file'])
+
+
+@contextmanager
+def configured_io():
+    """Contextmanager wrapper for `get_configured_io`_.
+
+    Yields:
+        io.IO: A instance of `io.IO`_.
+
+    Example:
+        >>> with configured_io() as io:
+                pass
+    """
+    io = None
+    try:
+        io = get_configured_io()
+        yield io
+
+    finally:
+        if io:
+            io.close()
 
 
 def notify(title, body=None, urgency=None, icon=const.APP_ICON):
@@ -42,10 +65,11 @@ def get_backups(include_valid=True, include_invalid=True):
         list: A sorted list of `backup.Backup`_ for the users configured
             target.
     """
-    io = get_io()
-    return sorted(
-        backup.Backup.all_backups(io, CFG.target['path'], include_valid,
-                                  include_invalid))
+    with configured_io() as io:
+        backups = sorted(
+            backup.Backup.all_backups(io, CFG.target['path'], include_valid,
+                                      include_invalid))
+        return backups
 
 
 def print_backups():
@@ -78,8 +102,9 @@ def create_backup(dry_run=False,
     else:
         utils.add_logging_handler('backup.log')
 
-        io = get_io()
-        bak = backup.Backup.new(io, CFG.target['path'])
+        with configured_io() as io:
+            bak = backup.Backup.new(io, CFG.target['path'])
+
         status = bak.backup(CFG.includes.keys(), CFG.excludes.keys(), dry_run)
         return bak, status
 
@@ -102,11 +127,11 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
             perform the restore.
 
     """
-    io = get_io()
-    if name:
-        bak = backup.Backup.from_name(io, name, CFG.target['path'])
-    else:
-        bak = backup.Backup.latest(io, CFG.target['path'])
+    with configured_io() as io:
+        if name:
+            bak = backup.Backup.from_name(io, name, CFG.target['path'])
+        else:
+            bak = backup.Backup.latest(io, CFG.target['path'])
 
     if not bak:
         print('No backup to restore from!')
@@ -135,18 +160,18 @@ def remove_backups(names, dry_run=False):
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
     """
-    io = get_io()
-    for name in names:
-        try:
-            b = backup.Backup.from_name(io, name, CFG.target['path'])
-        except exceptions.BackupNotFoundException:
-            print('Backup "{}" does not exist!'.format(name))
-            continue
+    with configured_io() as io:
+        for name in names:
+            try:
+                b = backup.Backup.from_name(io, name, CFG.target['path'])
+            except exceptions.BackupNotFoundException:
+                print('Backup "{}" does not exist!'.format(name))
+                continue
 
-        if not dry_run:
-            b.remove()
+            if not dry_run:
+                b.remove()
 
-        print('Successfully removed "{}"'.format(name))
+            print('Successfully removed "{}"'.format(name))
 
 
 def remove_but_keep(keep, dry_run=False):
