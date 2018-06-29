@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 DUPS="../../run"
 README="../../README.md"
-TEMPLATE="../../README.md.template"
+TEMPLATE="../../README-template.md"
 
 data=$(cat "$TEMPLATE")
 
