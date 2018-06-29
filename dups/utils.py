@@ -206,6 +206,9 @@ class IO:
         if self._instance_key in IO.__instances:
             del IO.__instances[self._instance_key]
 
+    def close(self):
+        self.__del__()
+
     @classmethod
     def get(cls, host=None, port=None, username=None, config_file=None,
             key_file=None) -> _IO:
