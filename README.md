@@ -54,7 +54,6 @@ To anyone helping out, thank you very very much! I do really appreciate it!
 # Package-names may varry on your system
 
 # Based on Archlinux
-openssh
 rsync
 dbus
 libnotify
@@ -64,9 +63,8 @@ python-paramiko
 python-ruamel-yaml
 
 # Based on Ubuntu bionic
-openssh-client
 rsync
-dbu
+dbus
 libnotify-dev
 python3-gi
 libdbus-1-dev
@@ -93,7 +91,9 @@ There's a package in the aur: [dups-git](https://aur.archlinux.org/packages/dups
 
 ### Other
 ```sh
-pip install git+https://github.com/linuxwhatelse/dups
+$ git clone https://github.com/linuxwhatelse/dups && cd dups
+$ pip install .
+$ cp data/systemd/dups.service ~/.config/systemd/user/
 ```
 
 
@@ -118,6 +118,7 @@ dups --help
 ```
 
 ### Including / Excluding items
+To add files, folders or patterns to the list of includes/excludes you can:
 ```sh
 # Include some directories
 $ dups --include ~/.config ~/.local/share
@@ -189,16 +190,21 @@ A daemon can be started manually (this call is blocking)...
 $ dups --daemon
 ```
 
-...of via the included [systemd service](/data/systemd/dups.service).
+...or via the included [systemd service](/data/systemd/dups.service).
 ```sh
 $ systemctl --user start dups.service
 ```
 If this service is not available to you (most likely because it hasn't been packaged for your distribution) you can simply copy it to `~/.config/systemd/user/dups.service`.
 
-Afterwards reloading the user-units, you should be able to start it:
+After reloading the user-units, you should be able to start it:
 ```sh
 $ systemctl --user daemon-reload
 $ systemctl --user start dups.service
+```
+
+Now you can instruct the daemon to run your backup:
+```sh
+$ dups --backup --background
 ```
 
 

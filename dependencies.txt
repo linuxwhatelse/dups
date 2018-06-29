@@ -1,7 +1,6 @@
 # Package-names may varry on your system
 
 # Based on Archlinux
-openssh
 rsync
 dbus
 libnotify
@@ -11,9 +10,8 @@ python-paramiko
 python-ruamel-yaml
 
 # Based on Ubuntu bionic
-openssh-client
 rsync
-dbu
+dbus
 libnotify-dev
 python3-gi
 libdbus-1-dev

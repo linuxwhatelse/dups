@@ -2,9 +2,9 @@ FROM base/archlinux
 
 RUN pacman -Sy
 
-# prep dependencies
+# prep/test dependencies
 RUN pacman -S --noconfirm \
-    base-devel openssh python python-pip
+    base-devel openssh python python-pip python-ddt
 
 RUN mkdir /var/run/sshd
 
@@ -15,10 +15,6 @@ RUN pacman -S  --noconfirm \
 # dups python requirements
 RUN pacman -S --noconfirm \
     python-dbus python-paramiko python-ruamel-yaml
-
-# dups unittest requirements
-RUN pacman -S --noconfirm \
-    python-ddt
 
 COPY tests/.ssh /root/.ssh
 RUN chmod -R 700 /root/.ssh

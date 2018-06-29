@@ -2,23 +2,19 @@ FROM ubuntu:bionic
 
 RUN apt-get update
 
-# prep dependencies
+# prep/test dependencies
 RUN apt-get install -y \
-    openssh-server python3 python3-pip
+    openssh-server python3 python3-pip python3-ddt
 
 RUN mkdir /var/run/sshd
 
 # dups system dependencies
 RUN apt-get install --no-install-recommends -y \
-    openssh-client rsync dbus libnotify-dev python3-gi libdbus-1-dev
+    rsync dbus libnotify-dev python3-gi libdbus-1-dev
 
 # dups python requirements
 RUN apt-get install --no-install-recommends -y \
     python3-dbus python3-paramiko python3-ruamel.yaml
-
-# dups unittest requirements
-RUN apt-get install -y \
-    python3-ddt
 
 COPY tests/.ssh /root/.ssh
 RUN chmod -R 700 /root/.ssh
