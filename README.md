@@ -5,7 +5,7 @@ dups
 
 **Even though I actively use `dups` already, it should still be considered alpha!**
 
-It deduplicates things - Backup as simple as possible.
+_It deduplicates things - Backup as simple as possible._
 
 As there was no linux backup solution that was simple and
 _to the point_-enough to fit my needs, I decided to write my own.
@@ -21,6 +21,31 @@ Another priority of mine was the ability to acces backups without any special
 software.
 As each backup is just a _dumb_ replication of your local content, this is
 easily achieved.
+
+
+## Table of Contents
+* [Todo](#todo)
+* [Requirements](#requirements)
+  * [System dependencies](#system-dependencies)
+  * [Python dependencies](#python-dependencies)
+* [Installation](#installation)
+  * [archlinux](#archlinux)
+  * [Other](#other)
+* [Configuration](#configuration)
+* [Usage](#usage)
+  * [Including / Excluding items](#including-/-excluding-items)
+  * [Listing includes / excludes](#listing-includes-/-excludes)
+  * [Remove includes / excludes](#remove-includes-/-excludes)
+  * [Start a backup](#start-a-backup)
+  * [Delete a backup](#delete-a-backup)
+  * [Start a restore](#start-a-restore)
+  * [In the background](#in-the-background)
+* [Gotchas / FAQ](#gotchas-faq)
+
+## Todo
+A **Logo / App icon** is still very much needed.  
+If you feel like helping out, [here](https://github.com/linuxwhatelse/dups/issues/4) is where you can ask questions, post designs etc.  
+To anyone helping out, thank you very very much! I do really appreciate it!
 
 
 ## Requirements
@@ -62,12 +87,6 @@ ddt
 ```
 
 
-## Todo
-- [ ] Unit tests
-- [ ] Remove old backups based on the [GFS](https://en.wikipedia.org/wiki/Backup_rotation_scheme#Grandfather-father-son) rotation scheme
-- [ ] Logo/App icon preferably fitting the [Paper Icon Theme](https://snwh.org/paper) (help wanted)
-
-
 ## Installation
 ### archlinux
 There's a package in the aur: [dups-git](https://aur.archlinux.org/packages/dups-git/)
@@ -89,86 +108,117 @@ target:
   host: 'backup-server-hostname'
   username: 'root'
 ```
-
-
-## Gotchas
-### User/Group for files and folders are not properly backed up.
-On unix systems it is typical that **only** root can change a files/folders
-user and group.
-To keep the user and group, you'd have to connect with root to the remote system.
+`dups` can read your `ssh_config` so you may only specify a `host`.
 
 
 ## Usage
-For the time being, here's the help text.
-```text
-usage: dups [-h] [-B] [-R [NAME]] [--items ITEMS [ITEMS ...]]
-            [--target TARGET] [-r REMOVE [REMOVE ...]]
-            [--remove-but-keep [REMOVE_BUT_KEEP]]
-            [--remove-older-than [REMOVE_OLDER_THAN]] [-l]
-            [-i INCLUDE [INCLUDE ...]] [-li]
-            [-ri REMOVE_INCLUDES [REMOVE_INCLUDES ...]]
-            [-e EXCLUDE [EXCLUDE ...]] [-le]
-            [-re REMOVE_EXCLUDES [REMOVE_EXCLUDES ...]] [--daemon] [-bg]
-            [--dry-run]
+`dups`'s help text is your friend :)
+```sh
+dups --help
+```
 
-It deduplicates things - Backup as simple as possible.
+### Including / Excluding items
+```sh
+# Include some directories
+$ dups --include ~/.config ~/.local/share
 
-optional arguments:
-  -h, --help            show this help message and exit
+# Include some files
+$ dups --include ~/.gitconfig ~/.bash_profile
 
-Backup:
-  -B, --backup          Start a new backup.
+# Include all files/folders ending with "rc" (e.g. .vimrc, .bashrc)
+$ dups --include "$HOME/*rc"
 
-Restore:
-  -R [NAME], --restore [NAME]
-                        Start a new restore. If name is omitted or set to
-                        "latest", the most recent backup is used. Use
-                        "-l|--list" to get a list of available backups.
-  --items ITEMS [ITEMS ...]
-                        Restore the given files/folders. If omitted, the
-                        entire backup will be restored.
-  --target TARGET       Where to restore to. If omitted or set to "/", all
-                        files will be restored to their original location.
+# Exclude some directories
+$ dups --exclude ~/.local/share/Trash ~/.local/share/tracker
 
-Remove:
-  -r REMOVE [REMOVE ...], --remove REMOVE [REMOVE ...]
-                        Remove the given backups. This can NOT be undone! Use
-                        "-l|--list" to get a list of available backups.
-  --remove-but-keep [REMOVE_BUT_KEEP]
-                        Remove all but keep this many of most recent backups.
-                        This can NOT be undone!
-  --remove-older-than [REMOVE_OLDER_THAN]
-                        Remove all backups older than this where "this"
-                        referes to a combination of a "number" and a
-                        "identifier". The identifier can be one of "s"
-                        Seconds, "m" Minutes, "h" Hours, "d" Days or "w"
-                        Weeks. e.g "1w" would refer to "1 week". This can NOT
-                        be undone!
+# Exclude based on a pattern (note the quotes)
+$ dups --exclude '*.zip' '*.iso' '*mp3' '*.txt'
+```
 
-Management:
-  -l, --list            List all available backups.
-  -i INCLUDE [INCLUDE ...], --include INCLUDE [INCLUDE ...]
-                        Add folders, file and/or patterns to the include list.
-                        When adding patterns, surround them with quotes to
-                        ensure they are not resolved to files or folders.
-  -li, --list-includes  List all folders, files and pattern from the include
-                        list.
-  -ri REMOVE_INCLUDES [REMOVE_INCLUDES ...], --remove-includes REMOVE_INCLUDES [REMOVE_INCLUDES ...]
-                        Remove the given items from the include list.
-  -e EXCLUDE [EXCLUDE ...], --exclude EXCLUDE [EXCLUDE ...]
-                        Add folders, file and/or patterns to the exlude list.
-                        When adding patterns, surround them with quotes to
-                        ensure they are not resolved to files or folders.
-  -le, --list-excludes  List all folders, files and pattern from the exclude
-                        list.
-  -re REMOVE_EXCLUDES [REMOVE_EXCLUDES ...], --remove-excludes REMOVE_EXCLUDES [REMOVE_EXCLUDES ...]
-                        Remove the given items from the exclude list.
+### Listing includes / excludes
+```sh
+# List all included items
+$ dups --list-includes
 
-Other:
-  --daemon              Start a daemon.
-  -bg, --background     Perform the given task in the background. A running
-                        daemon is required. See "--daemon". Only applies to "
-                        --backup" and "--restore".
-  --dry-run             Perform a trial run with no changes made. Only applies
-                        to "--backup", "--restore" and all "remove" functions.
+# List all excluded items
+$ dups --list-excludes
+```
+
+### Remove includes / excludes
+```sh
+# Remove a file from the include list
+$ dups --remove-includes ~/.bash_profile
+
+# Remove a pattern from the exclude list
+$ dups --remove-excludes '*.txt'
+```
+
+### Start a backup
+```sh
+$ dups --backup
+```
+
+
+### Delete a backup
+```sh
+# Remove a specific backup
+$ dups --remove <backup name>
+
+# Remove all old backups but keep 14 generations
+$ dups --remove-but-keep 14
+
+# Remove all backups older than 14 days
+# See dups --help for possible values
+$ dups --remove-older-than 14d
+```
+
+### Start a restore
+```sh
+# Restore the entire most recent backup to its original location
+$ dups --restore
+
+# Restore a file from a specific backup to a specific location
+$ dups --restore <backup-name> --items $HOME/.vimrc --target /tmp/
+```
+
+### In the background
+Backup and restore tasks can be run in the background if a daemon instance is running.
+
+A daemon can be started manually (this call is blocking)...
+```sh
+$ dups --daemon
+```
+
+...of via the included [systemd service](/data/systemd/dups.service).
+```sh
+$ systemctl --user start dups.service
+```
+If this service is not available to you (most likely because it hasn't been packaged for your distribution) you can simply copy it to `~/.config/systemd/user/dups.service`.
+
+Afterwards reloading the user-units, you should be able to start it:
+```sh
+$ systemctl --user daemon-reload
+$ systemctl --user start dups.service
+```
+
+
+## Gotchas / FAQ
+### User/Group for files and folders are not properly backed up.
+On unix systems it is typical that **only** root is able to change a folders/files
+user and group.  
+To keep the user and group, you'd have to connect with **root** to the remote system.  
+
+On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/) to receive backups.
+
+### How do I automate backups?
+Currently using cron.  
+I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if your PC was turned off or suspended, tasks will still be run.
+
+A cron entry could look something like:
+```sh
+# This starts a backup at 20:00 and does:
+#   1. Wait up to 5 minutes for a valid network connection
+#   2. Remove all backups older than 13 days
+#   3. Start a new backup in the background
+0 20 * * * nm-online -q -t 300; dups --remove-but-keep 13; dups --background --backup
 ```

@@ -5,7 +5,7 @@ dups
 
 **Even though I actively use `dups` already, it should still be considered alpha!**
 
-It deduplicates things - Backup as simple as possible.
+_It deduplicates things - Backup as simple as possible._
 
 As there was no linux backup solution that was simple and
 _to the point_-enough to fit my needs, I decided to write my own.
@@ -23,6 +23,31 @@ As each backup is just a _dumb_ replication of your local content, this is
 easily achieved.
 
 
+## Table of Contents
+* [Todo](#todo)
+* [Requirements](#requirements)
+  * [System dependencies](#system-dependencies)
+  * [Python dependencies](#python-dependencies)
+* [Installation](#installation)
+  * [archlinux](#archlinux)
+  * [Other](#other)
+* [Configuration](#configuration)
+* [Usage](#usage)
+  * [Including / Excluding items](#including-/-excluding-items)
+  * [Listing includes / excludes](#listing-includes-/-excludes)
+  * [Remove includes / excludes](#remove-includes-/-excludes)
+  * [Start a backup](#start-a-backup)
+  * [Delete a backup](#delete-a-backup)
+  * [Start a restore](#start-a-restore)
+  * [In the background](#in-the-background)
+* [Gotchas / FAQ](#gotchas-faq)
+
+## Todo
+A **Logo / App icon** is still very much needed.  
+If you feel like helping out, [here](https://github.com/linuxwhatelse/dups/issues/4) is where you can ask questions, post designs etc.  
+To anyone helping out, thank you very very much! I do really appreciate it!
+
+
 ## Requirements
 ### System dependencies
 ```
@@ -33,12 +58,6 @@ easily achieved.
 ```
 [[ req-py ]]
 ```
-
-
-## Todo
-- [ ] Unit tests
-- [ ] Remove old backups based on the [GFS](https://en.wikipedia.org/wiki/Backup_rotation_scheme#Grandfather-father-son) rotation scheme
-- [ ] Logo/App icon preferably fitting the [Paper Icon Theme](https://snwh.org/paper) (help wanted)
 
 
 ## Installation
@@ -62,18 +81,117 @@ target:
   host: 'backup-server-hostname'
   username: 'root'
 ```
-
-
-## Gotchas
-### User/Group for files and folders are not properly backed up.
-On unix systems it is typical that **only** root can change a files/folders
-user and group.
-To keep the user and group, you'd have to connect with root to the remote system.
+`dups` can read your `ssh_config` so you may only specify a `host`.
 
 
 ## Usage
-For the time being, here's the help text.
-```text
-[[ help ]]
+`dups`'s help text is your friend :)
+```sh
+dups --help
 ```
 
+### Including / Excluding items
+```sh
+# Include some directories
+$ dups --include ~/.config ~/.local/share
+
+# Include some files
+$ dups --include ~/.gitconfig ~/.bash_profile
+
+# Include all files/folders ending with "rc" (e.g. .vimrc, .bashrc)
+$ dups --include "$HOME/*rc"
+
+# Exclude some directories
+$ dups --exclude ~/.local/share/Trash ~/.local/share/tracker
+
+# Exclude based on a pattern (note the quotes)
+$ dups --exclude '*.zip' '*.iso' '*mp3' '*.txt'
+```
+
+### Listing includes / excludes
+```sh
+# List all included items
+$ dups --list-includes
+
+# List all excluded items
+$ dups --list-excludes
+```
+
+### Remove includes / excludes
+```sh
+# Remove a file from the include list
+$ dups --remove-includes ~/.bash_profile
+
+# Remove a pattern from the exclude list
+$ dups --remove-excludes '*.txt'
+```
+
+### Start a backup
+```sh
+$ dups --backup
+```
+
+
+### Delete a backup
+```sh
+# Remove a specific backup
+$ dups --remove <backup name>
+
+# Remove all old backups but keep 14 generations
+$ dups --remove-but-keep 14
+
+# Remove all backups older than 14 days
+# See dups --help for possible values
+$ dups --remove-older-than 14d
+```
+
+### Start a restore
+```sh
+# Restore the entire most recent backup to its original location
+$ dups --restore
+
+# Restore a file from a specific backup to a specific location
+$ dups --restore <backup-name> --items $HOME/.vimrc --target /tmp/
+```
+
+### In the background
+Backup and restore tasks can be run in the background if a daemon instance is running.
+
+A daemon can be started manually (this call is blocking)...
+```sh
+$ dups --daemon
+```
+
+...of via the included [systemd service](/data/systemd/dups.service).
+```sh
+$ systemctl --user start dups.service
+```
+If this service is not available to you (most likely because it hasn't been packaged for your distribution) you can simply copy it to `~/.config/systemd/user/dups.service`.
+
+Afterwards reloading the user-units, you should be able to start it:
+```sh
+$ systemctl --user daemon-reload
+$ systemctl --user start dups.service
+```
+
+
+## Gotchas / FAQ
+### User/Group for files and folders are not properly backed up.
+On unix systems it is typical that **only** root is able to change a folders/files
+user and group.  
+To keep the user and group, you'd have to connect with **root** to the remote system.  
+
+On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/) to receive backups.
+
+### How do I automate backups?
+Currently using cron.  
+I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if your PC was turned off or suspended, tasks will still be run.
+
+A cron entry could look something like:
+```sh
+# This starts a backup at 20:00 and does:
+#   1. Wait up to 5 minutes for a valid network connection
+#   2. Remove all backups older than 13 days
+#   3. Start a new backup in the background
+0 20 * * * nm-online -q -t 300; dups --remove-but-keep 13; dups --background --backup
+```
