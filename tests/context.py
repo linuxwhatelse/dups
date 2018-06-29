@@ -6,6 +6,8 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, os.pardir)))
 
+BACKUP_DIR = os.path.join(HERE, 'backups')
+
 DATA_DIR = os.path.join(HERE, 'data')
 
 TEST_DIR = os.path.join(HERE, 'data', 'test.dir')

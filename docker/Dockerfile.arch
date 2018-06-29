@@ -16,6 +16,10 @@ RUN pacman -S  --noconfirm \
 RUN pacman -S --noconfirm \
     python-dbus python-paramiko python-ruamel-yaml
 
+# dups unittest requirements
+RUN pacman -S --noconfirm \
+    python-ddt
+
 COPY tests/.ssh /root/.ssh
 RUN chmod -R 700 /root/.ssh
 
