@@ -75,6 +75,7 @@ def get_backups(include_valid=True, include_invalid=True):
 def print_backups():
     """Print a list of all available backups in a pretty way."""
     backups = get_backups()
+
     print('Name', '\t\t', 'Date', '\t\t\t', 'Valid')
     for b in backups:
         valid = 'yes' if b.is_valid else 'no'
@@ -104,9 +105,10 @@ def create_backup(dry_run=False,
 
         with configured_io() as io:
             bak = backup.Backup.new(io, CFG.target['path'])
+            status = bak.backup(CFG.includes.keys(), CFG.excludes.keys(),
+                                dry_run)
 
-        status = bak.backup(CFG.includes.keys(), CFG.excludes.keys(), dry_run)
-        return bak, status
+            return bak, status
 
 
 def restore_backup(items=None, name=None, target=None, dry_run=False,
@@ -133,23 +135,23 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
         else:
             bak = backup.Backup.latest(io, CFG.target['path'])
 
-    if not bak:
-        print('No backup to restore from!')
-        return None, None
+        if not bak:
+            print('No backup to restore from!')
+            return None, None
 
-    if target:
-        target = os.path.abspath(target)
+        if target:
+            target = os.path.abspath(target)
 
-    if background:
-        name = bak.name
-        client = daemon.Client.get()
-        client.restore(items, name, target, dry_run)
-        return None, None
-    else:
-        utils.add_logging_handler('restore.log')
+        if background:
+            name = bak.name
+            client = daemon.Client.get()
+            client.restore(items, name, target, dry_run)
+            return None, None
+        else:
+            utils.add_logging_handler('restore.log')
 
-        status = bak.restore(target, items, dry_run)
-        return bak, status
+            status = bak.restore(target, items, dry_run)
+            return bak, status
 
 
 def remove_backups(names, dry_run=False):
