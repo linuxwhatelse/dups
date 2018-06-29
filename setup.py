@@ -11,6 +11,8 @@ def get_requirements():
         for line in f.readlines():
             line = line.strip()
             if not line or line.startswith('#'):
+                if line.lstrip('#').strip().lower().startswith('unittests'):
+                    break
                 continue
             requirements.append(line)
 

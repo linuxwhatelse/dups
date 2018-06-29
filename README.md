@@ -48,9 +48,13 @@ python3-gi
 
 ### Python dependencies
 ```
+# Runtime
 dbus-python
 paramiko
 ruamel.yaml>=0.15.0
+
+# Unittest
+ddt
 ```
 
 

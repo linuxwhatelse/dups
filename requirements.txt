@@ -1,3 +1,7 @@
+# Runtime
 dbus-python
 paramiko
 ruamel.yaml>=0.15.0
+
+# Unittests
+ddt
