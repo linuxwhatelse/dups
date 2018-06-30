@@ -1,30 +1,35 @@
 env:
-  matrix:  
-    - DOCKERFILE=docker/Dockerfile.bionic
-      PYTHON=python3
-      PIP=pip3
-
-    - DOCKERFILE=docker/Dockerfile.arch
+  matrix:
+    - DIST=arch
+      DOCKERFILE=docker/Dockerfile.arch
       PYTHON=python
       PIP=pip
 
-sudo: required
+    - DIST=bionic
+      DOCKERFILE=docker/Dockerfile.bionic
+      PYTHON=python3
+      PIP=pip3
 
+    - DIST=stretch
+      DOCKERFILE=docker/Dockerfile.stretch
+      PYTHON=python3
+      PIP=pip3
+
+sudo: required
 language: generic
 
 services:
   - docker
 
 install:
-  - |
-    docker build -f ${DOCKERFILE} --pull --tag linuxwhatelse/dups .
+  - docker build -f ${DOCKERFILE} --pull --tag linuxwhatelse/dups-${DIST} .
 
 script:
   - |
-    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups bash -c \
+    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} bash -c \
       "${PIP} install /dups && dups --help"
 
   - |
-    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups bash -c \
+    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} bash -c \
       "/usr/sbin/sshd && ${PYTHON} -m unittest discover -v -s /dups/tests"
 

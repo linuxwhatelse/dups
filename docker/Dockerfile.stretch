@@ -1,0 +1,22 @@
+FROM debian:stretch-slim
+
+RUN apt-get update
+
+# prep/test dependencies
+RUN apt-get install -y \
+    openssh-server python3 python3-pip python3-ddt
+
+RUN mkdir /var/run/sshd
+
+# dups system dependencies
+RUN apt-get install --no-install-recommends -y \
+    rsync dbus libnotify-dev python3-gi libdbus-1-dev
+
+# dups python requirements
+RUN apt-get install --no-install-recommends -y \
+    python3-dbus python3-paramiko python3-ruamel.yaml
+
+COPY tests/.ssh /root/.ssh
+RUN chmod -R 700 /root/.ssh
+
+RUN /usr/bin/ssh-keygen -A
