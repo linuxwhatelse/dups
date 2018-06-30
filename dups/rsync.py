@@ -1,6 +1,6 @@
 import logging
 import subprocess
-from typing import List, TypeVar, Union
+from typing import List, TypeVar
 
 LOGGER = logging.getLogger(__name__)
 _RSYNC = TypeVar('_RSYNC', bound='rsync')

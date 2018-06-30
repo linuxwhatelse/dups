@@ -148,7 +148,7 @@ def handle(callback, *args, **kwargs):
     except KeyError as e:
         print('Unable to connect to {}'.format(e))
 
-    except dbus.exceptions.DBusException as e:
+    except dbus.exceptions.DBusException:
         print('Unable to connect to daemon. Is one running?')
         LOGGER.debug(traceback.format_exc())
 
