@@ -9,11 +9,13 @@ env:
       DOCKERFILE=docker/Dockerfile.bionic
       PYTHON=python3
       PIP=pip3
+      BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
 
     - DIST=stretch
       DOCKERFILE=docker/Dockerfile.stretch
       PYTHON=python3
       PIP=pip3
+      BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
 
 sudo: required
 language: generic
@@ -33,3 +35,9 @@ script:
     docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} bash -c \
       "/usr/sbin/sshd && ${PYTHON} -m unittest discover -v -s /dups/tests"
 
+after_success:
+  - |
+    if [ ! -z ${BUILD_SCRIPT} ]; then
+      docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} \
+        ${BUILD_SCRIPT}
+    fi

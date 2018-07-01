@@ -2,12 +2,15 @@ import os
 
 from setuptools import find_packages, setup
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.realpath(__file__))
+DATA_FILES = list()
+
+INCLUDE_DATA_FILES = os.environ.get('INCLUDE_DATA_FILES', 'False') == 'True'
 
 
 def get_requirements():
     requirements = list()
-    with open('requirements.txt', 'r') as f:
+    with open(os.path.join(HERE, 'requirements.txt'), 'r') as f:
         for line in f.readlines():
             line = line.strip()
             if not line or line.startswith('#'):
@@ -18,6 +21,9 @@ def get_requirements():
 
     return requirements
 
+
+if INCLUDE_DATA_FILES:
+    DATA_FILES.append(('/usr/lib/systemd/user', ['data/systemd/dups.service']))
 
 setup(
     name='dups',
@@ -37,7 +43,10 @@ setup(
     ],
     python_requires='~=3.5',
     packages=find_packages(),
-    include_package_data=True,  # Reads from MANIFEST.in
+    package_data={'dups': [
+        'data/config.yaml',
+    ]},
+    data_files=DATA_FILES,
     scripts=['bin/dups'],
     install_requires=get_requirements(),
     zip_safe=False,

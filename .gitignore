@@ -7,6 +7,10 @@
 /dist
 /dups.egg-info
 
+# stdeb build files
+/deb_dist
+/dups-*
+
 /data/pkg/archlinux/*
 !/data/pkg/archlinux/PKGBUILD
 !/data/pkg/archlinux/python-dups.install
