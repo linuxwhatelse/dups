@@ -278,7 +278,7 @@ class IO:
     @property
     def port(self):
         """int: The port provided while creating this instance."""
-        return self._port
+        return int(self._port)
 
     @property
     def username(self):
