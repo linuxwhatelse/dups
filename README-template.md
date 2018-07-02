@@ -13,9 +13,9 @@ _to the point_-enough to fit my needs, I decided to write my own.
 `dups` is powered by `rsync` using the amazing `--link-dest` option to
 save space **and** time when backing up.
 
-What this does is it creates [hard links](https://en.wikipedia.org/wiki/Hard_link) to **unchanged** files from the
-previous backup meaning they don't have to be transfered again **and** do not
-take up additional disk space.
+What this does is it creates [hard links](https://en.wikipedia.org/wiki/Hard_link)
+to **unchanged** files from the previous backup meaning they don't have to be
+transfered again **and** do not take up additional disk space.
 
 Another priority of mine was the ability to acces backups without any special
 software.
@@ -44,7 +44,8 @@ easily achieved.
 
 ## Todo
 A **Logo / App icon** is still very much needed.  
-If you feel like helping out, [here](https://github.com/linuxwhatelse/dups/issues/4) is where you can ask questions, post designs etc.  
+If you feel like helping out, [here](https://github.com/linuxwhatelse/dups/issues/4)
+is where you can ask questions, post designs etc.  
 To anyone helping out, thank you very very much! I do really appreciate it!
 
 
@@ -159,7 +160,8 @@ $ dups --restore <backup-name> --items $HOME/.vimrc --target /tmp/
 ```
 
 ### In the background
-Backup and restore tasks can be run in the background if a daemon instance is running.
+Backup and restore tasks can be run in the background if a daemon instance is
+running.
 
 A daemon can be started manually (this call is blocking)...
 ```sh
@@ -170,7 +172,9 @@ $ dups --daemon
 ```sh
 $ systemctl --user start dups.service
 ```
-If this service is not available to you (most likely because it hasn't been packaged for your distribution) you can simply copy it to `~/.config/systemd/user/dups.service`.
+If this service is not available to you (most likely because it hasn't been
+packaged for your distribution) you can simply copy it to
+`~/.config/systemd/user/dups.service`.
 
 After reloading the user-units, you should be able to start it:
 ```sh
@@ -186,15 +190,18 @@ $ dups --backup --background
 
 ## Gotchas / FAQ
 ### User/Group for files and folders are not properly backed up.
-On unix systems it is typical that **only** root is able to change a folders/files
-user and group.  
-To keep the user and group, you'd have to connect with **root** to the remote system.  
+On unix systems it is typical that **only** root is able to change a
+folders/files user and group.  
+To keep the user and group, you'd have to connect with **root** to the remote
+system.  
 
-On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/) to receive backups.
+On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/)
+to receive backups.
 
 ### How do I automate backups?
 Currently using cron.  
-I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if your PC was turned off or suspended, tasks will still be run afterwards.
+I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if
+your PC was turned off or suspended, tasks will still be run afterwards.
 
 A cron entry could look something like:
 ```sh
