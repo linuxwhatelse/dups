@@ -12,6 +12,9 @@ class Config:
     __instance = None
     __lock = threading.RLock()
 
+    config_template = const.CONFIG_TEMPLATE_PATH
+    config_file = const.CONFIG_PATH
+
     _user = None
     _template = None
     _combined = None
@@ -21,7 +24,7 @@ class Config:
            Using `Config.get`_ is the preferred way.
         """
         self._template = {}
-        with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
+        with open(self.config_template, 'r') as f:
             self._template = ruamel.yaml.YAML(typ='safe').load(f.read())
 
         self.reload()
@@ -42,8 +45,8 @@ class Config:
         """Reload the config data from file."""
         with Config.__lock:
             self._user = {}
-            if os.path.isfile(const.CONFIG_PATH):
-                with open(const.CONFIG_PATH, 'r') as f:
+            if os.path.isfile(self.config_file):
+                with open(self.config_file, 'r') as f:
                     self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
 
             self._combined = utils.dict_merge(self._template, self._user)
@@ -54,7 +57,7 @@ class Config:
             yaml = ruamel.yaml.YAML()
             yaml.indent(mapping=2, sequence=4, offset=2)
 
-            with open(const.CONFIG_PATH, 'w+') as f:
+            with open(self.config_file, 'w+') as f:
                 yaml.dump(self._user, f)
 
     def _add_list_data(self, key, values):
@@ -64,8 +67,7 @@ class Config:
             key (str): Name of the list to add all values to.
             values (list): Items to add to the given list.
         """
-        if not isinstance(self._user[key], dict):
-            self._user[key] = {}
+        self._user.setdefault(key, {})
 
         for val in values:
             if os.path.isdir(val):
@@ -77,7 +79,7 @@ class Config:
             else:
                 type_ = 'patterns'
 
-            self._user[key][type_].append(val)
+            self._user[key].setdefault(type_, []).append(val)
             self._user[key][type_].sort()
 
         self._combined = utils.dict_merge(self._template, self._user)
@@ -89,7 +91,7 @@ class Config:
             key (str): Name of the list to remove all values from.
             values (list): Items to remove from the given list.
         """
-        if not isinstance(self._user[key], dict):
+        if not isinstance(self._user.get(key, None), dict):
             return None
 
         for val in values:
@@ -202,4 +204,3 @@ class Config:
     def logging(self):
         """dict: The configured logging options."""
         return self._combined['logging']
-

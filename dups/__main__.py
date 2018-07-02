@@ -1,10 +1,12 @@
 import argparse
 import logging
+import os
 import sys
 import traceback
 
 import dbus
 import paramiko
+import ruamel.yaml
 
 from . import config, const, daemon, exceptions, helper, rsync, utils
 
@@ -33,6 +35,22 @@ def configure_rsync():
     sync.prune_empty_dirs = cfg.rsync['prune_empty_dirs']
     sync.out_format = cfg.rsync['out_format']
 
+
+def reconfigure(path):
+    """Updates the config based on the given path.
+
+    Args:
+        path (str): Path for the config file to read
+
+    Raises:
+        FileNotFoundError: If the supplied config does not exist.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError
+
+    cfg = config.Config.get()
+    cfg.config_file = os.path.abspath(path)
+    cfg.reload()
 
 def parse_args():
     """Parse all commandline arguments.
@@ -121,6 +139,8 @@ def parse_args():
         '--dry-run', action='store_true', default=False,
         help='Perform a trial run with no changes made. '
         'Only applies to "--backup", "--restore" and all "remove" functions.')
+    other_group.add_argument('-c', '--config', nargs='?', type=str,
+                             help='Use this config file instead.')
 
     return parser.parse_args()
 
@@ -169,7 +189,18 @@ def handle(callback, *args, **kwargs):
 def main():
     """Entrypoint for dups."""
     args = parse_args()
-    cfg = config.Config.get()
+
+    try:
+        if args.config:
+            reconfigure(args.config)
+        cfg = config.Config.get()
+
+    except FileNotFoundError:
+        print('The supplied config file does not exist.')
+        sys.exit(1)
+    except ruamel.yaml.parser.ParserError:
+        print('Invalid config. Check for any syntax errors.')
+        sys.exit(1)
 
     configure_logger()
     configure_rsync()
