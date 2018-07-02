@@ -12,12 +12,18 @@ class Config:
     __instance = None
     __lock = threading.RLock()
 
-    _data = None
+    _user = None
+    _template = None
+    _combined = None
 
     def __init__(self):
         """Create a new config instance.
            Using `Config.get`_ is the preferred way.
         """
+        self._template = dict()
+        with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
+            self._template = ruamel.yaml.YAML(typ='safe').load(f.read())
+
         self.reload()
 
     @classmethod
@@ -35,20 +41,12 @@ class Config:
     def reload(self):
         """Reload the config data from file."""
         with Config.__lock:
-            config_data = dict()
+            self._user = dict()
             if os.path.isfile(const.CONFIG_PATH):
                 with open(const.CONFIG_PATH, 'r') as f:
-                    config_data = ruamel.yaml.YAML(typ='safe').load(f.read())
-            else:
-                dir_ = os.path.dirname(const.CONFIG_PATH)
-                if not os.path.exists(dir_):
-                    os.makedirs(dir_)
+                    self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
 
-            template_data = dict()
-            with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
-                template_data = ruamel.yaml.YAML(typ='safe').load(f.read())
-
-            self._data = utils.dict_merge(template_data, config_data)
+            self._combined = utils.dict_merge(self._template, self._user)
 
     def save(self):
         """Save the current configuration to file."""
@@ -57,7 +55,7 @@ class Config:
             yaml.indent(mapping=2, sequence=4, offset=2)
 
             with open(const.CONFIG_PATH, 'w+') as f:
-                yaml.dump(self._data, f)
+                yaml.dump(self._user, f)
 
     def _add_list_data(self, key, values):
         """Add the given values to the list identified by the given key.
@@ -66,8 +64,8 @@ class Config:
             key (str): Name of the list to add all values to.
             values (list): Items to add to the given list.
         """
-        if not isinstance(self._data[key], dict):
-            self._data[key] = dict()
+        if not isinstance(self._user[key], dict):
+            self._user[key] = dict()
 
         for val in values:
             if os.path.isfile(val):
@@ -79,7 +77,9 @@ class Config:
             else:
                 type_ = 'pattern'
 
-            self._data[key][val] = type_
+            self._user[key][val] = type_
+
+        self._combined = utils.dict_merge(self._template, self._user)
 
     def _remove_list_data(self, key, values):
         """Remove the given values from the list identified by the given key.
@@ -88,20 +88,22 @@ class Config:
             key (str): Name of the list to remove all values from.
             values (list): Items to remove from the given list.
         """
-        if not isinstance(self._data[key], dict):
+        if not isinstance(self._user[key], dict):
             return None
 
         for val in values:
             if os.path.isfile(val) or os.path.isdir(val):
                 val = os.path.abspath(val)
 
-            if val in self._data[key]:
-                del self._data[key][val]
+            if val in self._user[key]:
+                del self._user[key][val]
+
+        self._combined = utils.dict_merge(self._template, self._user)
 
     @property
     def target(self):
         """dict: The configured target with expanded paths."""
-        t = self._data['target']
+        t = self._combined['target']
 
         if t['path']:
             t['path'] = os.path.expanduser(t['path'])
@@ -117,9 +119,9 @@ class Config:
     @property
     def includes(self):
         """dict: The configured includes."""
-        if not self._data['includes']:
+        if not self._combined['includes']:
             return dict()
-        return self._data['includes']
+        return self._combined['includes']
 
     def add_includes(self, values):
         """Add new items to the list of includes.
@@ -144,9 +146,9 @@ class Config:
     @property
     def excludes(self):
         """dict: The configured excludes."""
-        if not self._data['excludes']:
+        if not self._combined['excludes']:
             return dict()
-        return self._data['excludes']
+        return self._combined['excludes']
 
     def add_excludes(self, values):
         """Add new items to the list of excludes.
@@ -171,14 +173,15 @@ class Config:
     @property
     def notify(self):
         """bool: The configured notify state."""
-        return self._data['notify']
+        return self._combined['notify']
 
     @property
     def rsync(self):
         """dict: The configured rsync options."""
-        return self._data['rsync']
+        return self._combined['rsync']
 
     @property
     def logging(self):
         """dict: The configured logging options."""
-        return self._data['logging']
+        return self._combined['logging']
+
