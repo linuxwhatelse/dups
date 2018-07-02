@@ -261,7 +261,7 @@ class IO:
             cfg = {**cfg, **ssh_config.lookup(self.host)}
 
         self._host = cfg['hostname']
-        self._port = cfg['port']
+        self._port = int(cfg['port'])
         self._username = cfg['user']
         self._key_file = cfg['identityfile']
 
@@ -278,7 +278,7 @@ class IO:
     @property
     def port(self):
         """int: The port provided while creating this instance."""
-        return int(self._port)
+        return self._port
 
     @property
     def username(self):
