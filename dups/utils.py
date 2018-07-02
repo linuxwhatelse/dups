@@ -1,3 +1,4 @@
+import collections
 import datetime
 import errno
 import functools
@@ -7,6 +8,7 @@ import logging.handlers
 import os
 import shutil
 import stat
+from copy import deepcopy
 from typing import TypeVar
 
 import paramiko
@@ -109,15 +111,17 @@ def dict_merge(defaults, new):
     Returns:
         dict: Merged version of both dictionaries.
     """
-    for k, v in new.items():
-        if (k in defaults and isinstance(defaults[k], dict)
-                and isinstance(new[k], dict)):
-            dict_merge(defaults[k], new[k])
+    result = deepcopy(defaults)
 
+    for key, val in new.items():
+        if isinstance(val, collections.Mapping):
+            result[key] = dict_merge(result.get(key, {}), val)
+        elif isinstance(val, list):
+            result[key] = result.get(key, []) + val
         else:
-            defaults[k] = new[k]
+            result[key] = deepcopy(new[key])
 
-    return defaults
+    return result
 
 
 def duration_to_timedelta(duration):
