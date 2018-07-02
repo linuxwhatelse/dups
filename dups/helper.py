@@ -208,7 +208,7 @@ def remove_older_than(duration, dry_run=False):
         print('Invalid duration specified.')
         return
 
-    names = list()
+    names = []
     for b in get_backups():
         if b.datetime > older_than:
             break

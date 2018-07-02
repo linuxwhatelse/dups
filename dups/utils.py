@@ -171,7 +171,7 @@ def validate_absolute(func):
 
 class IO:
     """Class to abstract simple file operations for local and sftp."""
-    __instances = dict()
+    __instances = {}
 
     _instance_key = None
 

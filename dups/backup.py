@@ -90,11 +90,11 @@ class Backup(object):
             list: A list consisting of `Backup`_ instances.
         """
 
-        backups = list()
+        backups = []
         try:
             listing = io.listdir(root_dir)
         except FileNotFoundError:
-            return list()
+            return []
 
         for f in listing:
             try:
@@ -304,7 +304,7 @@ class Backup(object):
 
         target = rsync.Path(target)
 
-        sources = list()
+        sources = []
         for item in items:
             # Limit path information by insterting a dot and a slash into
             # the source path.

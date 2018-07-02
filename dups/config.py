@@ -20,7 +20,7 @@ class Config:
         """Create a new config instance.
            Using `Config.get`_ is the preferred way.
         """
-        self._template = dict()
+        self._template = {}
         with open(const.CONFIG_TEMPLATE_PATH, 'r') as f:
             self._template = ruamel.yaml.YAML(typ='safe').load(f.read())
 
@@ -41,7 +41,7 @@ class Config:
     def reload(self):
         """Reload the config data from file."""
         with Config.__lock:
-            self._user = dict()
+            self._user = {}
             if os.path.isfile(const.CONFIG_PATH):
                 with open(const.CONFIG_PATH, 'r') as f:
                     self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
@@ -65,7 +65,7 @@ class Config:
             values (list): Items to add to the given list.
         """
         if not isinstance(self._user[key], dict):
-            self._user[key] = dict()
+            self._user[key] = {}
 
         for val in values:
             if os.path.isdir(val):

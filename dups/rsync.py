@@ -229,7 +229,7 @@ class rsync(object):
         cmd = self.cmd
 
         if not excludes:
-            excludes = list()
+            excludes = []
 
         if not target.is_local and target.port:
             cmd.extend(('-e', '{} -p {}'.format(self.ssh_bin, target.port)))

@@ -2,7 +2,7 @@ import os
 
 
 def get_dir_struct(target):
-    struct = dict()
+    struct = {}
     for item in os.listdir(target):
         path = os.path.join(target, item)
         if os.path.isdir(path):

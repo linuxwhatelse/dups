@@ -3,13 +3,13 @@ import os
 from setuptools import find_packages, setup
 
 HERE = os.path.dirname(os.path.realpath(__file__))
-DATA_FILES = list()
+DATA_FILES = []
 
 INCLUDE_DATA_FILES = os.environ.get('INCLUDE_DATA_FILES', 'False') == 'True'
 
 
 def get_requirements():
-    requirements = list()
+    requirements = []
     with open(os.path.join(HERE, 'requirements.txt'), 'r') as f:
         for line in f.readlines():
             line = line.strip()
