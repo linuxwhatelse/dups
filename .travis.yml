@@ -1,18 +1,18 @@
 env:
   matrix:
     - DIST=arch
-      DOCKERFILE=docker/Dockerfile.arch
+      DOCKERFILE=data/docker/Dockerfile.arch
       PYTHON=python
       PIP=pip
 
     - DIST=bionic
-      DOCKERFILE=docker/Dockerfile.bionic
+      DOCKERFILE=data/docker/Dockerfile.bionic
       PYTHON=python3
       PIP=pip3
       BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
 
     - DIST=stretch
-      DOCKERFILE=docker/Dockerfile.stretch
+      DOCKERFILE=data/docker/Dockerfile.stretch
       PYTHON=python3
       PIP=pip3
       BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
