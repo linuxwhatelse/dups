@@ -68,16 +68,17 @@ class Config:
             self._user[key] = dict()
 
         for val in values:
-            if os.path.isfile(val):
+            if os.path.isdir(val):
                 val = os.path.abspath(val)
-                type_ = 'file'
-            elif os.path.isdir(val):
+                type_ = 'folders'
+            elif os.path.isfile(val):
                 val = os.path.abspath(val)
-                type_ = 'folder'
+                type_ = 'files'
             else:
-                type_ = 'pattern'
+                type_ = 'patterns'
 
-            self._user[key][val] = type_
+            self._user[key][type_].append(val)
+            self._user[key][type_].sort()
 
         self._combined = utils.dict_merge(self._template, self._user)
 
@@ -95,8 +96,9 @@ class Config:
             if os.path.isfile(val) or os.path.isdir(val):
                 val = os.path.abspath(val)
 
-            if val in self._user[key]:
-                del self._user[key][val]
+            for type_ in ['folders', 'files', 'patterns']:
+                if val in self._user[key].get(type_, []):
+                    self._user[key][type_].remove(val)
 
         self._combined = utils.dict_merge(self._template, self._user)
 
@@ -116,11 +118,19 @@ class Config:
 
         return t
 
-    @property
-    def includes(self):
-        """dict: The configured includes."""
-        if not self._combined['includes']:
-            return dict()
+    def get_includes(self, flat=False):
+        """Get all configured includes.
+
+        Args:
+            flat (bool): Whether or not to merge folders, files and patterns
+                into a flat list.
+
+        Returns:
+            dict|list: A `dict` if `flat` is `False`, a `list` otherwise.
+        """
+        if flat:
+            incl = self._combined['includes']
+            return [*incl['folders'], *incl['files'], *incl['patterns']]
         return self._combined['includes']
 
     def add_includes(self, values):
@@ -143,11 +153,19 @@ class Config:
         self._remove_list_data('includes', values)
         self.save()
 
-    @property
-    def excludes(self):
-        """dict: The configured excludes."""
-        if not self._combined['excludes']:
-            return dict()
+    def get_excludes(self, flat=False):
+        """Get all configured excludes.
+
+        Args:
+            flat (bool): Whether or not to merge folders, files and patterns
+                into a flat list.
+
+        Returns:
+            dict|list: A `dict` if `flat` is `False`, a `list` otherwise.
+        """
+        if flat:
+            excl = self._combined['excludes']
+            return [*excl['folders'], *excl['files'], *excl['patterns']]
         return self._combined['excludes']
 
     def add_excludes(self, values):

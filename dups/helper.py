@@ -105,8 +105,8 @@ def create_backup(dry_run=False,
 
         with configured_io() as io:
             bak = backup.Backup.new(io, CFG.target['path'])
-            status = bak.backup(CFG.includes.keys(), CFG.excludes.keys(),
-                                dry_run)
+            status = bak.backup(
+                CFG.get_includes(True), CFG.get_excludes(True), dry_run)
 
             return bak, status
 

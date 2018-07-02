@@ -222,8 +222,7 @@ def main():
         cfg.add_includes(args.include)
 
     if args.list_includes:
-        includes = sorted(cfg.includes.keys())
-        print('\n'.join(includes))
+        print('\n'.join(sorted(cfg.get_includes(True))))
 
     if args.remove_includes:
         cfg.remove_includes(args.remove_includes)
@@ -232,8 +231,7 @@ def main():
         cfg.add_excludes(args.exclude)
 
     if args.list_excludes:
-        excludes = sorted(cfg.excludes.keys())
-        print('\n'.join(excludes))
+        print('\n'.join(sorted(cfg.get_excludes(True))))
 
     if args.remove_excludes:
         cfg.remove_excludes(args.remove_excludes)

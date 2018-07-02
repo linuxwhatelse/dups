@@ -50,15 +50,11 @@ logging:
   paramiko: 100
 
 includes:
-  # Format: <file/folder/pattern>: <type>
-  # e.g.
-  #
-  # /etc/fstab: file
-  # /boot/loader: folder
+  folders: []
+  files: []
+  patterns: []
 
 excludes:
-  # Format: <file/folder/pattern>: <type>
-  # e.g.
-  #
-  # '*.tar*': pattern
-
+  folders: []
+  files: []
+  patterns: []
