@@ -162,7 +162,7 @@ class rsync(object):
             cmd.insert(1, '--dry-run')
 
         if self.out_format:
-            cmd.append('--out-format="{}"'.format(self.out_format))
+            cmd.extend(('--out-format', self.out_format))
 
         if self.acls:
             cmd.append('--acls')
@@ -236,11 +236,15 @@ class rsync(object):
 
         includes = list(
             i.resolved_path if isinstance(i, Path) else i for i in includes)
-        excludes = list('--exclude={}'.format(path) for path in excludes)
+
+        tmp = []
+        for e in excludes:
+            tmp.extend(('--exclude', e))
+        excludes = tmp
 
         if link_dest:
             cmd.append('--delete')
-            cmd.append('--link-dest={}'.format(link_dest))
+            cmd.extend(('--link-dest', link_dest))
 
         cmd.extend(includes)
         cmd.extend(excludes)
