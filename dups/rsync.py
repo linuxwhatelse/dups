@@ -191,7 +191,7 @@ class rsync(object):
             raise RuntimeError('A process is already running!')
 
         LOGGER.info('Executing rsync:')
-        LOGGER.info(' '.join(command))
+        LOGGER.info(subprocess.list2cmdline(command))
         with subprocess.Popen(command, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, bufsize=1,
                               universal_newlines=True) as proc:
