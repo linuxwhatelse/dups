@@ -9,7 +9,7 @@
 
 /data/pkg/archlinux/*
 !/data/pkg/archlinux/PKGBUILD
-!/data/pkg/archlinux/dups.install
+!/data/pkg/archlinux/python-dups.install
 
 *.py[co]
 
