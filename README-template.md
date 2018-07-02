@@ -63,7 +63,7 @@ To anyone helping out, thank you very very much! I do really appreciate it!
 
 ## Installation
 ### archlinux
-There's a package in the aur: [dups-git](https://aur.archlinux.org/packages/dups-git/)
+There's a package in the aur: [python-dups-git](https://aur.archlinux.org/packages/python-dups-git/)
 
 ### Other
 ```sh
