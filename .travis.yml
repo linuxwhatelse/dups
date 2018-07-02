@@ -28,12 +28,12 @@ install:
 
 script:
   - |
-    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} bash -c \
-      "${PIP} install /dups && dups --help"
+    docker run --rm -it -v $(pwd):/dups:ro linuxwhatelse/dups-${DIST} \
+      /dups/data/scripts/travis/test-install.sh ${PIP}
 
   - |
-    docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} bash -c \
-      "/usr/sbin/sshd && ${PYTHON} -m unittest discover -v -s /dups/tests"
+    docker run --rm -it -v $(pwd):/dups:ro linuxwhatelse/dups-${DIST} \
+      /dups/data/scripts/travis/test-dups.sh ${PYTHON}
 
 after_success:
   - |
