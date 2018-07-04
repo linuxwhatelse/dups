@@ -99,8 +99,8 @@ $ cp data/systemd/dups.service ~/.config/systemd/user/
 
 
 ## Configuration
-`dups` reads its config from `~/.config/dups.yaml` or `~/.config/dups/config.yaml`
-(create it if it doesn't exist) and combines it with default values which you
+`dups` reads its config from `~/.config/dups/config.yaml` (create it if it
+doesn't exist) and combines it with default values which you
 can find [here](dups/data/config.yaml).
 
 Hence a basic user config would look something like this:
