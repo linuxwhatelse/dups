@@ -1,56 +1,16 @@
 import argparse
+import getpass
 import logging
-import os
 import sys
 import traceback
 
 import dbus
 import paramiko
-import ruamel.yaml
 
-from . import config, const, daemon, exceptions, helper, rsync, utils
+from . import const, daemon, exceptions, helper
 
 LOGGER = logging.getLogger(__name__)
 
-
-def configure_logger():
-    """Configure the logger based on the config file."""
-    cfg = config.Config.get()
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
-
-    for name, level in cfg.logging.items():
-        logging.getLogger(name).setLevel(level)
-
-
-def configure_rsync():
-    """Configure rsync based on the config file."""
-    cfg = config.Config.get()
-    sync = rsync.rsync.get()
-
-    sync.rsync_bin = cfg.rsync['rsync_bin']
-    sync.ssh_bin = cfg.rsync['ssh_bin']
-
-    sync.acls = cfg.rsync['acls']
-    sync.xattrs = cfg.rsync['xattrs']
-    sync.prune_empty_dirs = cfg.rsync['prune_empty_dirs']
-    sync.out_format = cfg.rsync['out_format']
-
-
-def reconfigure(path):
-    """Updates the config based on the given path.
-
-    Args:
-        path (str): Path for the config file to read
-
-    Raises:
-        FileNotFoundError: If the supplied config does not exist.
-    """
-    if not os.path.exists(path):
-        raise FileNotFoundError
-
-    cfg = config.Config.get()
-    cfg.config_file = os.path.abspath(path)
-    cfg.reload()
 
 def parse_args():
     """Parse all commandline arguments.
@@ -66,6 +26,7 @@ def parse_args():
     restore_group = parser.add_argument_group('Restore')
     remove_group = parser.add_argument_group('Remove')
     management_group = parser.add_argument_group('Management')
+    daemon_group = parser.add_argument_group('Daemon')
     other_group = parser.add_argument_group('Other')
 
     backup_group.add_argument('-B', '--backup', action='store_true',
@@ -128,21 +89,47 @@ def parse_args():
         '-re', '--remove-excludes', nargs='+', type=str,
         help='Remove the given items from the exclude list.')
 
-    other_group.add_argument('--daemon', action='store_true', default=False,
-                             help='Start a daemon.')
-    other_group.add_argument(
+    daemon_group.add_argument(
+        '--daemon', action='store_true',
+        help='Start a user session daemon. To properly backup/restore files '
+        'owned by root, you need a system daemon. See "--system-daemon"')
+    daemon_group.add_argument(
+        '--system-daemon', action='store_true',
+        help='Start a system daemon. If desktop notifications are wanted, '
+        'a session daemon is also required. See "--daemon".')
+
+    daemon_group.add_argument(
         '-bg', '--background', action='store_true', default=False,
-        help='Perform the given task in the background. A running daemon is '
-        'required. See "--daemon". '
+        help='Perform the given task on the session daemon. See "--daemon". '
         'Only applies to "--backup" and "--restore".')
+    daemon_group.add_argument(
+        '-sbg', '--system-background', action='store_true', default=False,
+        help='Perform the given task on the system daemon. See'
+        '"--system-daemon". Only applies to "--backup" and "--restore".')
+
+    other_group.add_argument(
+        '-u', '--user', nargs='?', type=str, default=getpass.getuser(),
+        help='Use this users configuration. Only usefull when running as '
+        'root.')
+    other_group.add_argument('-c', '--config', nargs='?', type=str,
+                             help='Use this config file instead.')
     other_group.add_argument(
         '--dry-run', action='store_true', default=False,
         help='Perform a trial run with no changes made. '
         'Only applies to "--backup", "--restore" and all "remove" functions.')
-    other_group.add_argument('-c', '--config', nargs='?', type=str,
-                             help='Use this config file instead.')
 
     return parser.parse_args()
+
+
+def handle_daemon(username, system=False):
+    try:
+        daemon.Daemon.run(username, system)
+
+    except dbus.exceptions.DBusException:
+        print('The system daemon requires root privileges.')
+        return 1
+
+    return 0
 
 
 def handle(callback, *args, **kwargs):
@@ -179,7 +166,7 @@ def handle(callback, *args, **kwargs):
         print('Process canceled.')
 
     except Exception as e:
-        print('Something unforeseen happend. Try increasing the log-level.')
+        print('Something bad happend. Try increasing the log-level.')
         print(e)
         LOGGER.debug(traceback.format_exc())
 
@@ -190,31 +177,27 @@ def main():
     """Entrypoint for dups."""
     args = parse_args()
 
-    try:
-        if args.config:
-            reconfigure(args.config)
-        cfg = config.Config.get()
+    helper.prepare_env(args.user)
 
-    except FileNotFoundError:
-        print('The supplied config file does not exist.')
-        sys.exit(1)
-    except ruamel.yaml.parser.ParserError:
-        print('Invalid config. Check for any syntax errors.')
+    # Exits if necessary
+    cfg = helper.prepare_config(args.config)
+    if cfg is None:
         sys.exit(1)
 
-    configure_logger()
-    configure_rsync()
+    helper.configure_logger()
+    helper.configure_rsync()
 
-    if args.daemon:
-        utils.save_env()
-        daemon.Daemon.run()
-        sys.exit(0)
+    LOGGER.debug('Using config: %s', cfg.config_file)
 
-    utils.load_env()
+    if args.daemon or args.system_daemon:
+        sys.exit(handle_daemon(args.user, args.system_daemon))
+
+    dbus_client = None
+    if args.background or args.system_background:
+        dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
     if args.backup:
-        bak, status = handle(helper.create_backup, args.dry_run,
-                             args.background)
+        bak, status = handle(helper.create_backup, args.dry_run, dbus_client)
 
         if status:
             print(status.message)
@@ -227,7 +210,7 @@ def main():
         if args.restore == 'latest':
             name = None
         bak, status = handle(helper.restore_backup, args.items, name,
-                             args.target, args.dry_run, args.background)
+                             args.target, args.dry_run, dbus_client)
         if status:
             print(status.message)
             sys.exit(status.exit_code)

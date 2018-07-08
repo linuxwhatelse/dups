@@ -2,7 +2,6 @@ import collections
 import datetime
 import errno
 import functools
-import json
 import logging
 import logging.handlers
 import os
@@ -13,13 +12,13 @@ from typing import TypeVar
 
 import paramiko
 
-from . import config, const
+from . import config, const, user
 
 import gi  # isort:skip
 gi.require_version('Notify', '0.7')  # isort:skip
-from gi.repository import Notify  # noqa: E402 isort:skip
+from gi.repository import Notify  # noqa: E402, isort:skip
 
-Notify.init(const.DBUS_NAME)
+Notify.init(const.APP_NAME)
 
 _IO = TypeVar('_IO', bound='IO')
 
@@ -37,14 +36,17 @@ def add_logging_handler(file_name):
         file_name (str): The file name to write logs into.
     """
     cfg = config.Config.get()
+    usr = user.User.get()
 
-    logfile = os.path.join(const.CACHE_DIR, file_name)
+    logfile = os.path.join(usr.cache_dir, file_name)
     do_rollover = os.path.exists(logfile)
 
     handler = logging.handlers.RotatingFileHandler(logfile, backupCount=7)
 
     if do_rollover:
         handler.doRollover()
+
+    os.chown(logfile, usr.uid, usr.gid)
 
     for name, level in cfg.logging.items():
         logging.getLogger(name).addHandler(handler)
@@ -77,28 +79,6 @@ def notify(title, body=None, urgency=None, icon=None, app_name=None):
         # catch for now:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
         pass
-
-
-def save_env():
-    """Write all currently known environment variables to the cache dir."""
-    with open(const.ENV_PATH, 'w+') as f:
-        f.write(json.dumps(dict(os.environ)))
-
-
-def load_env():
-    """Read all environment variables from the cache dir to the current
-       environment."""
-    if not os.path.isfile(const.ENV_PATH):
-        return
-
-    with open(const.ENV_PATH, 'r') as f:
-        try:
-            env = json.loads(f.read())
-        except json.decoder.JSONDecodeError:
-            env = None
-
-    if env:
-        os.environ.update(env)
 
 
 def dict_merge(defaults, new):
@@ -183,7 +163,7 @@ class IO:
     _sftp = None
 
     def __init__(self, host=None, port=None, username=None, config_file=None,
-                 key_file=None):
+                 key_file=None, known_hosts_file=None):
         """Create a new instance of `IO`_.
            Using `IO.get`_ is the preferred method.
 
@@ -200,6 +180,7 @@ class IO:
         self._username = username
         self._config_file = config_file
         self._key_file = key_file
+        self._known_hosts_file = known_hosts_file
 
         self._connect_remote()
 
@@ -215,7 +196,7 @@ class IO:
 
     @classmethod
     def get(cls, host=None, port=None, username=None, config_file=None,
-            key_file=None) -> _IO:
+            key_file=None, known_hosts_file=None) -> _IO:
         """Get a instance of `IO`_ for the given arguments.
 
         Args:
@@ -224,6 +205,8 @@ class IO:
             username (str): If remote, the username with wich to connect.
             key_file (str): If remote, the absolute path a ssh private key
                 file to allow password-less authentication.
+            known_hosts_file (str): If remote, the absolute path to the
+                known_hosts to use.
 
         Returns:
             IO: A existing (or new if it's the first call)
@@ -233,7 +216,7 @@ class IO:
 
         if key not in cls.__instances:
             cls.__instances[key] = cls(host, port, username, config_file,
-                                       key_file)
+                                       key_file, known_hosts_file)
 
         cls.__instances[key]._instance_key = key
         return cls.__instances[key]
@@ -246,7 +229,8 @@ class IO:
         self._ssh = paramiko.client.SSHClient()
 
         self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-        self._ssh.load_system_host_keys()
+        if self._known_hosts_file:
+            self._ssh.load_host_keys(self._known_hosts_file)
 
         ssh_config = paramiko.SSHConfig()
 
@@ -264,13 +248,8 @@ class IO:
 
             cfg = {**cfg, **ssh_config.lookup(self.host)}
 
-        self._host = cfg['hostname']
-        self._port = int(cfg['port'])
-        self._username = cfg['user']
-        self._key_file = cfg['identityfile']
-
-        self._ssh.connect(self.host, self.port, self.username,
-                          key_filename=self.key_file)
+        self._ssh.connect(cfg['hostname'], int(cfg['port']), cfg['user'],
+                          key_filename=cfg['identityfile'])
 
         self._sftp = self._ssh.open_sftp()
 
@@ -303,6 +282,11 @@ class IO:
     def key_file(self):
         """str: The key_file provided while creating this instance."""
         return self._key_file
+
+    @property
+    def known_hosts_file(self):
+        """str: The known_hosts_file provided while creating this instance."""
+        return self._known_hosts_file
 
     @property
     def is_local(self):

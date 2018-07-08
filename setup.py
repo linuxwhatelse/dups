@@ -3,9 +3,6 @@ import os
 from setuptools import find_packages, setup
 
 HERE = os.path.dirname(os.path.realpath(__file__))
-DATA_FILES = []
-
-INCLUDE_DATA_FILES = os.environ.get('INCLUDE_DATA_FILES', 'False') == 'True'
 
 
 def get_requirements():
@@ -22,8 +19,24 @@ def get_requirements():
     return requirements
 
 
-if INCLUDE_DATA_FILES:
-    DATA_FILES.append(('/usr/lib/systemd/user', ['data/systemd/dups.service']))
+def get_data_files():
+    include_data_files = os.environ.get('INCLUDE_DATA_FILES', '').split(' ')
+    include_data_files = [i.strip().lower() for i in include_data_files]
+
+    data_files = []
+    if 'systemd' in include_data_files:
+        data_files.append(('/usr/lib/systemd/user/',
+                           ['data/usr/lib/systemd/user/dups.service']))
+        data_files.append(('/usr/lib/systemd/system/',
+                           ['data/usr/lib/systemd/system/dups@.service']))
+
+    if 'dbus' in include_data_files:
+        data_files.append(
+            ('/etc/dbus-1/system.d/',
+             ['data/etc/dbus-1/system.d/de.linuxwhatelse.dups.conf']))
+
+    return data_files
+
 
 setup(
     name='dups',
@@ -46,7 +59,7 @@ setup(
     package_data={'dups': [
         'data/config.yaml',
     ]},
-    data_files=DATA_FILES,
+    data_files=get_data_files(),
     scripts=['bin/dups'],
     install_requires=get_requirements(),
     zip_safe=False,

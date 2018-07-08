@@ -7,17 +7,20 @@ target:
   host:
 
   # Target port on which to store the backup.
-  port: 22
+  port:
 
   # Username as which to connect to the remote host. Leave emtpy if local
   # backup is desired.
   username:
 
+  # Path to the SSH key file to use for authentication.
+  ssh_key_file:
+
   # Path to the SSH config file.
   ssh_config_file: '~/.ssh/config'
 
-  # Path to the SSH key file to use for authentication.
-  ssh_key_file: '~/.ssh/id_rsa'
+  # Path to the known hosts file to use
+  ssh_known_hosts_file: '~/.ssh/known_hosts'
 
 
 # Whether or not the daemon should post notifications.

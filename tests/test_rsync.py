@@ -23,10 +23,6 @@ class Test_Path(unittest.TestCase):
                        context.SSH_USER)
         self.assertTrue(not p.is_local)
 
-    def test_invalid(self):
-        self.assertRaises(ValueError, rsync.Path, context.TEST_DIR,
-                          context.SSH_HOST)
-
 
 class Test_Status(unittest.TestCase):
     def test_valid(self):

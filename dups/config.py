@@ -1,9 +1,12 @@
 import os
 import threading
+from typing import TypeVar
 
 import ruamel.yaml
 
-from . import const, utils
+from . import const, user, utils
+
+_CONFIG = TypeVar('_CONFIG', bound='Config')
 
 
 class Config:
@@ -12,8 +15,8 @@ class Config:
     __instance = None
     __lock = threading.RLock()
 
-    config_template = const.CONFIG_TEMPLATE_PATH
-    config_file = const.CONFIG_PATH
+    _config_file = None
+    _config_template = None
 
     _user = None
     _template = None
@@ -21,16 +24,18 @@ class Config:
 
     def __init__(self):
         """Create a new config instance.
-           Using `Config.get`_ is the preferred way.
-        """
+           Using `Config.get`_ is the preferred way."""
+        usr = user.User.get()
+
+        self._config_file = usr.config_file
+        self._config_template = const.CONFIG_TEMPLATE_FILE
+
         self._template = {}
-        with open(self.config_template, 'r') as f:
+        with open(self._config_template, 'r') as f:
             self._template = ruamel.yaml.YAML(typ='safe').load(f.read())
 
-        self.reload()
-
     @classmethod
-    def get(cls):
+    def get(cls) -> _CONFIG:
         """Get a instance of `Config`_.
 
         Returns:
@@ -45,9 +50,8 @@ class Config:
         """Reload the config data from file."""
         with Config.__lock:
             self._user = {}
-            if os.path.isfile(self.config_file):
-                with open(self.config_file, 'r') as f:
-                    self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
+            with open(self._config_file, 'r') as f:
+                self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
 
             self._combined = utils.dict_merge(self._template, self._user)
 
@@ -57,8 +61,26 @@ class Config:
             yaml = ruamel.yaml.YAML()
             yaml.indent(mapping=2, sequence=4, offset=2)
 
-            with open(self.config_file, 'w+') as f:
+            with open(self._config_file, 'w+') as f:
                 yaml.dump(self._user, f)
+
+    @property
+    def config_file(self):
+        return self._config_file
+
+    @config_file.setter
+    def config_file(self, config_file):
+        self._config_file = config_file
+        self.reload()
+
+    @property
+    def config_template(self):
+        return self._config_template
+
+    @config_template.setter
+    def config_template(self, template_file):
+        self._config_template = template_file
+        self.reload()
 
     def _add_list_data(self, key, values):
         """Add the given values to the list identified by the given key.
@@ -117,6 +139,10 @@ class Config:
 
         if t['ssh_config_file']:
             t['ssh_config_file'] = os.path.expanduser(t['ssh_config_file'])
+
+        if t['ssh_known_hosts_file']:
+            t['ssh_known_hosts_file'] = os.path.expanduser(
+                t['ssh_known_hosts_file'])
 
         return t
 

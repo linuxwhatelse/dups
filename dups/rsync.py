@@ -23,10 +23,6 @@ class Path(object):
         self.port = port
         self.username = username
 
-        if self.host and (not self.port or not self.username):
-            raise ValueError(
-                'If `host` is set, both `port` and `username` are required.')
-
     @property
     def is_local(self):
         """bool: Whether or not this `Path`_ refers to a local file."""
@@ -82,7 +78,7 @@ class Status(object):
         35: 'Timeout waiting for daemon connection',
 
         # ssh
-        255: 'Could not resolve hostname'
+        255: 'The underlying connection failed'
     }
 
     _exit_code = 0
@@ -122,13 +118,17 @@ class Status(object):
 class rsync(object):
     """Class to send/receive data using rsync."""
 
-    __instance = None
+    __instances = dict()
 
     _proc = None
     _exit_code = None
 
     rsync_bin = '/usr/bin/rsync'
     ssh_bin = '/usr/bin/ssh'
+
+    ssh_key_file = None
+    ssh_config_file = None
+    ssh_known_hosts_file = None
 
     acls = True
     xattrs = True
@@ -138,16 +138,19 @@ class rsync(object):
     dry_run = True
 
     @classmethod
-    def get(cls) -> _RSYNC:
+    def get(cls, name=__name__) -> _RSYNC:
         """Get a instance of `rsync`_.
+
+        Args:
+            name (str): A name for this instance.
 
         Returns:
             rsync: A existing (or new if it's the first call)
                 instance of `rsync`_.
         """
-        if cls.__instance is None:
-            cls.__instance = cls()
-        return cls.__instance
+        if name not in cls.__instances:
+            cls.__instances[name] = cls()
+        return cls.__instances[name]
 
     @property
     def cmd(self) -> list:
@@ -172,6 +175,25 @@ class rsync(object):
 
         if self.prune_empty_dirs:
             cmd.append('--prune-empty-dirs')
+
+        return cmd
+
+    @property
+    def ssh_cmd(self) -> list:
+        cmd = [
+            self.ssh_bin, '-o', 'StrictHostKeyChecking=no', '-o',
+            'NumberOfPasswordPrompts=0'
+        ]
+
+        if self.ssh_key_file:
+            cmd.extend(('-i', self.ssh_key_file))
+
+        if self.ssh_config_file:
+            cmd.extend(('-F', self.ssh_config_file))
+
+        if self.ssh_known_hosts_file:
+            cmd.extend(('-o', 'UserKnownHostsFile={}'.format(
+                self.ssh_known_hosts_file)))
 
         return cmd
 
@@ -227,12 +249,15 @@ class rsync(object):
             Status: A instance of `Status`_.
         """
         cmd = self.cmd
+        ssh_cmd = self.ssh_cmd
 
         if not excludes:
             excludes = []
 
         if not target.is_local and target.port:
-            cmd.extend(('-e', '{} -p {}'.format(self.ssh_bin, target.port)))
+            ssh_cmd.extend(('-p', str(target.port)))
+
+        cmd[1:1] = ['-e', ' '.join(ssh_cmd)]
 
         includes = list(
             i.resolved_path if isinstance(i, Path) else i for i in includes)

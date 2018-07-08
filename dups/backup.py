@@ -135,8 +135,10 @@ class Backup(object):
         backups = sorted(
             cls.all_backups(io, root_dir, include_valid, include_invalid),
             reverse=True)
+
         if len(backups) == 0:
             return None
+
         return backups[0]
 
     def __str__(self):
@@ -269,7 +271,6 @@ class Backup(object):
 
         target = rsync.Path(self.backup_data_dir, self._io.host, self._io.port,
                             self._io.username)
-        sync = rsync.rsync.get()
         status = sync.sync(target, items, excludes, link_dest)
 
         if not dry_run and status.is_complete:

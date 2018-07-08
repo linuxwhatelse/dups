@@ -1,11 +1,72 @@
 import datetime
+import logging
 import os
 from contextlib import contextmanager
 from typing import Tuple
 
-from . import backup, config, const, daemon, exceptions, rsync, utils
+import ruamel.yaml
 
-CFG = config.Config.get()
+from . import backup, config, const, exceptions, rsync, user, utils
+
+
+def configure_logger():
+    """Configure the logger based on the config file."""
+    cfg = config.Config.get()
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+    for name, level in cfg.logging.items():
+        logging.getLogger(name).setLevel(level)
+
+
+def prepare_env(username):
+    usr = user.User.get()
+    usr.set_user(username)
+
+    os.environ['USER'] = usr.user
+    os.environ['HOME'] = usr.home
+    os.environ['XDG_RUNTIME_DIR'] = usr.xdg_runtime_dir
+
+
+def prepare_config(config_file=None):
+    try:
+        if config_file:
+            config_file = os.path.abspath(config_file)
+        else:
+            usr = user.User.get()
+            config_file = usr.config_file
+
+        cfg = config.Config.get()
+        cfg.config_file = config_file
+        cfg.reload()
+
+    except FileNotFoundError:
+        print('The config file "{}" does not exist.'.format(cfg.config_file))
+        return None
+
+    except ruamel.yaml.parser.ParserError:
+        print('Invalid config at "{}". Check for any syntax errors.'.format(
+            cfg.config_file))
+        return None
+
+    return cfg
+
+
+def configure_rsync():
+    """Configure rsync based on the config file."""
+    cfg = config.Config.get()
+    sync = rsync.rsync.get()
+
+    sync.rsync_bin = cfg.rsync['rsync_bin']
+    sync.ssh_bin = cfg.rsync['ssh_bin']
+
+    sync.ssh_config_file = cfg.target['ssh_config_file']
+    sync.ssh_key_file = cfg.target['ssh_key_file']
+    sync.ssh_known_hosts_file = cfg.target['ssh_known_hosts_file']
+
+    sync.acls = cfg.rsync['acls']
+    sync.xattrs = cfg.rsync['xattrs']
+    sync.prune_empty_dirs = cfg.rsync['prune_empty_dirs']
+    sync.out_format = cfg.rsync['out_format']
 
 
 def get_configured_io():
@@ -15,10 +76,12 @@ def get_configured_io():
     Returns:
         io.IO: A instance of `io.IO`_.
     """
-    t = CFG.target
+    cfg = config.Config.get()
+
+    t = cfg.target
     return utils.IO.get(t['host'], t['port'], t['username'],
-                        config_file=t['ssh_config_file'],
-                        key_file=t['ssh_key_file'])
+                        t['ssh_config_file'], t['ssh_key_file'],
+                        t['ssh_known_hosts_file'])
 
 
 @contextmanager
@@ -52,7 +115,9 @@ def notify(title, body=None, urgency=None, icon=const.APP_ICON):
         urgency (utils.NUrgency): The notifications urgency level.
         icon (str): Name or path of the notifications icon.
     """
-    if not CFG.notify:
+    cfg = config.Config.get()
+
+    if not cfg.notify:
         return
 
     utils.notify(title, body, urgency, icon, const.APP_NAME)
@@ -65,9 +130,11 @@ def get_backups(include_valid=True, include_invalid=True):
         list: A sorted list of `backup.Backup`_ for the users configured
             target.
     """
+    cfg = config.Config.get()
+
     with configured_io() as io:
         backups = sorted(
-            backup.Backup.all_backups(io, CFG.target['path'], include_valid,
+            backup.Backup.all_backups(io, cfg.target['path'], include_valid,
                                       include_invalid))
         return backups
 
@@ -83,7 +150,7 @@ def print_backups():
 
 
 def create_backup(dry_run=False,
-                  background=False) -> Tuple[backup.Backup, rsync.Status]:
+                  client=None) -> Tuple[backup.Backup, rsync.Status]:
     """Creates a new backup based on the users configuration.
 
     Args:
@@ -96,23 +163,24 @@ def create_backup(dry_run=False,
         tuple: (`backup.Backup`_, `rsync.Status`_) if `background`_ was set to
             `False`, (`None`, `None`) otherwise.
     """
-    if background:
-        client = daemon.Client.get()
+    cfg = config.Config.get()
+
+    if client:
         client.backup(dry_run)
         return None, None
     else:
         utils.add_logging_handler('backup.log')
 
         with configured_io() as io:
-            bak = backup.Backup.new(io, CFG.target['path'])
+            bak = backup.Backup.new(io, cfg.target['path'])
             status = bak.backup(
-                CFG.get_includes(True), CFG.get_excludes(True), dry_run)
+                cfg.get_includes(True), cfg.get_excludes(True), dry_run)
 
             return bak, status
 
 
 def restore_backup(items=None, name=None, target=None, dry_run=False,
-                   background=False):
+                   client=None):
     """Starts a new restore based on the users configuration.
 
     Args:
@@ -129,11 +197,13 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
             perform the restore.
 
     """
+    cfg = config.Config.get()
+
     with configured_io() as io:
         if name:
-            bak = backup.Backup.from_name(io, name, CFG.target['path'])
+            bak = backup.Backup.from_name(io, name, cfg.target['path'])
         else:
-            bak = backup.Backup.latest(io, CFG.target['path'])
+            bak = backup.Backup.latest(io, cfg.target['path'])
 
         if not bak:
             print('No backup to restore from!')
@@ -142,9 +212,8 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
         if target:
             target = os.path.abspath(target)
 
-        if background:
+        if client:
             name = bak.name
-            client = daemon.Client.get()
             client.restore(items, name, target, dry_run)
             return None, None
         else:
@@ -162,10 +231,12 @@ def remove_backups(names, dry_run=False):
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
     """
+    cfg = config.Config.get()
+
     with configured_io() as io:
         for name in names:
             try:
-                b = backup.Backup.from_name(io, name, CFG.target['path'])
+                b = backup.Backup.from_name(io, name, cfg.target['path'])
             except exceptions.BackupNotFoundException:
                 print('Backup "{}" does not exist!'.format(name))
                 continue
