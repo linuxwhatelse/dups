@@ -57,7 +57,6 @@ To anyone helping out, thank you very very much! I do really appreciate it!
 # Based on Archlinux
 rsync
 dbus
-libnotify
 python-gobject
 python-dbus
 python-paramiko
@@ -66,7 +65,6 @@ python-ruamel-yaml
 # Based on Ubuntu bionic
 rsync
 dbus
-libnotify-dev
 python3-gi
 libdbus-1-dev
 python3-dbus

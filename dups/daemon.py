@@ -72,26 +72,26 @@ class Daemon(dbus.service.Object):
             print('Shuttind down...')
             sys.exit(0)
 
-    def __notification_listener(self, title, body, urgency, icon):
+    def __notification_listener(self, title, body, priority, icon):
         title = str(title)
         body = str(body)
-        urgency = int(urgency)
+        priority = int(priority)
         icon = str(icon)
         LOGGER.debug('Received notification from backend: %s',
-                     (title, body, urgency, icon))
-        self._notify(title, body, urgency, icon)
+                     (title, body, priority, icon))
+        self._notify(title, body, priority, icon)
 
     @dbus.service.method(const.DBUS_NAME, in_signature='ssis')
-    def _notify(self, title, body='', urgency=utils.NUrgency.NORMAL,
+    def _notify(self, title, body='', priority=utils.NPriority.NORMAL,
                 icon=const.APP_ICON):
         if not self.system:
-            helper.notify(title, body, urgency, icon)
+            helper.notify(title, body, priority, icon)
             return
 
         LOGGER.debug('Forwarding notification to user-session: %s', self.path)
         message = dbus.lowlevel.SignalMessage(self.path, const.DBUS_NAME,
                                               Daemon.NOTIFY_SIGNAL)
-        message.append(title, body, urgency, icon)
+        message.append(title, body, priority, icon)
         self.bus.send_message(message)
 
     @dbus.service.method(const.DBUS_NAME, in_signature='b')
@@ -114,7 +114,7 @@ class Daemon(dbus.service.Object):
 
             except Exception as e:
                 self._notify('Coulnd\'t start backup', str(e),
-                             utils.NUrgency.CRITICAL)
+                             utils.NPriority.URGENT)
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 
@@ -146,7 +146,7 @@ class Daemon(dbus.service.Object):
 
             except Exception as e:
                 self._notify('Coulnd\'t start restore', str(e),
-                             utils.NUrgency.CRITICAL)
+                             utils.NPriority.URGENT)
                 LOGGER.info(e)
                 LOGGER.debug(traceback.format_exc())
 

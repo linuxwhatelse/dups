@@ -105,14 +105,14 @@ def configured_io():
             io.close()
 
 
-def notify(title, body=None, urgency=None, icon=const.APP_ICON):
+def notify(title, body=None, priority=None, icon=const.APP_ICON):
     """Send a new notification to a notification daemon unless configured
        otherwise by the user.
 
     Args:
         title (str): The notifications title.
         body (str): The notifications body.
-        urgency (utils.NUrgency): The notifications urgency level.
+        priority (utils.NPriority): The notifications priority level.
         icon (str): Name or path of the notifications icon.
     """
     cfg = config.Config.get()
@@ -120,7 +120,8 @@ def notify(title, body=None, urgency=None, icon=const.APP_ICON):
     if not cfg.notify:
         return
 
-    utils.notify(title, body, urgency, icon, const.APP_NAME)
+    app_id = const.DBUS_NAME + '.notification'
+    utils.notify(app_id, title, body, priority, icon)
 
 
 def get_backups(include_valid=True, include_invalid=True):

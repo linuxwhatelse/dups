@@ -11,22 +11,18 @@ from copy import deepcopy
 from typing import TypeVar
 
 import paramiko
+from gi.repository import Gio
 
-from . import config, const, user
-
-import gi  # isort:skip
-gi.require_version('Notify', '0.7')  # isort:skip
-from gi.repository import Notify  # noqa: E402, isort:skip
-
-Notify.init(const.APP_NAME)
+from . import config, user
 
 _IO = TypeVar('_IO', bound='IO')
 
 
-class NUrgency:
-    LOW = Notify.Urgency.LOW
-    NORMAL = Notify.Urgency.NORMAL
-    CRITICAL = Notify.Urgency.CRITICAL
+class NPriority:
+    NORMAL = Gio.NotificationPriority.NORMAL
+    LOW = Gio.NotificationPriority.LOW
+    HIGH = Gio.NotificationPriority.HIGH
+    URGENT = Gio.NotificationPriority.URGENT
 
 
 def add_logging_handler(file_name):
@@ -52,33 +48,30 @@ def add_logging_handler(file_name):
         logging.getLogger(name).addHandler(handler)
 
 
-def notify(title, body=None, urgency=None, icon=None, app_name=None):
+def notify(app_id, title, body=None, priority=None, icon=None):
     """Send a new notification to a notification daemon.
 
     Args:
+        app_id (str): Unique id for the application posting this notification.
+            Must follow the "D-Bus well-known bus names" scheme.
         title (str): The notifications title.
         body (str): The notifications body.
-        urgency (NUrgency): The notifications urgency level.
+        priority (NPriority): The notifications priority level.
         icon (str): Name or path of the notifications icon.
-        app_name (str): Name for the app posting this notification.
     """
-    noti = Notify.Notification.new(title, body, icon)
+    app = Gio.Application.new(app_id, Gio.ApplicationFlags.FLAGS_NONE)
+    app.register()
 
-    if urgency is None:
-        urgency = NUrgency.NORMAL
+    notification = Gio.Notification.new(title)
+    notification.set_body(body)
 
-    noti.set_urgency(urgency)
+    if priority:
+        notification.set_priority(priority)
 
-    if app_name:
-        noti.set_app_name(app_name)
+    if icon:
+        notification.set_icon(Gio.ThemedIcon.new(icon))
 
-    try:
-        noti.show()
-    except Exception:
-        # Gnome  (and maybe others) throw weird erros which we have to
-        # catch for now:
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1260239
-        pass
+    app.send_notification(None, notification)
 
 
 def dict_merge(defaults, new):
@@ -232,8 +225,6 @@ class IO:
         if self._known_hosts_file:
             self._ssh.load_host_keys(self._known_hosts_file)
 
-        ssh_config = paramiko.SSHConfig()
-
         cfg = {
             'hostname': self.host,
             'port': self.port,
@@ -242,6 +233,7 @@ class IO:
         }
 
         if self.config_file:
+            ssh_config = paramiko.SSHConfig()
             if os.path.exists(self.config_file):
                 with open(self.config_file) as f:
                     ssh_config.parse(f)
