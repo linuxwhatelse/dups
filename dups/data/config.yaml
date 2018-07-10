@@ -7,7 +7,7 @@ target:
   host:
 
   # Target port on which to store the backup.
-  port:
+  port: 22
 
   # Username as which to connect to the remote host. Leave emtpy if local
   # backup is desired.
