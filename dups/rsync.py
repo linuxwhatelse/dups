@@ -254,7 +254,7 @@ class rsync(object):
         if not excludes:
             excludes = []
 
-        if not target.is_local and target.port:
+        if not target.is_local and target.port and target.port != 22:
             ssh_cmd.extend(('-p', str(target.port)))
 
         cmd[1:1] = ['-e', ' '.join(ssh_cmd)]
