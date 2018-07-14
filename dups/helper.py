@@ -1,12 +1,18 @@
 import datetime
 import logging
 import os
+import socket
+import traceback
 from contextlib import contextmanager
 from typing import Tuple
 
+import dbus
+import paramiko
 import ruamel.yaml
 
 from . import backup, config, const, exceptions, rsync, user, utils
+
+LOGGER = logging.getLogger(__name__)
 
 
 def configure_logger():
@@ -105,6 +111,53 @@ def configured_io():
             io.close()
 
 
+def error_handler(callback, *args, **kwargs):
+    """Handle the given callback and catch all exceptions if some should
+       arise.
+
+    Args:
+        callback (function): The function to execute.
+        *args: Arguments to pass to the callback.
+        **kargs: Keyword-Arguments to pass to the callback.
+    """
+    error_msg = None
+    try:
+        res = callback(*args, **kwargs)
+        return (True, res)
+
+    except paramiko.ssh_exception.BadHostKeyException:
+        error_msg = 'Host key verification failed.'
+
+    except paramiko.ssh_exception.SSHException as e:
+        LOGGER.debug(traceback.format_exc())
+        error_msg = str(e)
+
+    except paramiko.ssh_exception.NoValidConnectionsError as e:
+        LOGGER.debug(traceback.format_exc())
+        error_msg = str(e)
+
+    except (KeyError, socket.gaierror):
+        error_msg = 'Could not connect to host.'
+
+    except dbus.exceptions.DBusException:
+        LOGGER.debug(traceback.format_exc())
+        error_msg = 'Unable to connect to daemon. Is one running?'
+
+    except (exceptions.BackupAlreadyExistsException,
+            exceptions.BackupNotFoundException) as e:
+        error_msg = str(e)
+
+    except KeyboardInterrupt:
+        error_msg = 'Process canceled.'
+
+    except Exception as e:
+        LOGGER.debug(traceback.format_exc())
+        error_msg = 'Something bad happend. Try increasing the log-level.'
+        error_msg += str(e)
+
+    return (False, error_msg)
+
+
 def notify(title, body=None, priority=None, icon=const.APP_ICON):
     """Send a new notification to a notification daemon unless configured
        otherwise by the user.
@@ -200,24 +253,24 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
     """
     cfg = config.Config.get()
 
-    with configured_io() as io:
-        if name:
-            bak = backup.Backup.from_name(io, name, cfg.target['path'])
-        else:
-            bak = backup.Backup.latest(io, cfg.target['path'])
+    if client:
+        name = '' if not name else name
+        client.restore(items, name, target, dry_run)
+        return None, None
+    else:
+        with configured_io() as io:
+            if name:
+                bak = backup.Backup.from_name(io, name, cfg.target['path'])
+            else:
+                bak = backup.Backup.latest(io, cfg.target['path'])
 
-        if not bak:
-            print('No backup to restore from!')
-            return None, None
+            if not bak:
+                raise exceptions.BackupNotFoundException(
+                    'No backup to restore from!')
 
-        if target:
-            target = os.path.abspath(target)
+            if target:
+                target = os.path.abspath(target)
 
-        if client:
-            name = bak.name
-            client.restore(items, name, target, dry_run)
-            return None, None
-        else:
             utils.add_logging_handler('restore.log')
 
             status = bak.restore(target, items, dry_run)

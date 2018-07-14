@@ -2,12 +2,10 @@ import argparse
 import getpass
 import logging
 import sys
-import traceback
 
 import dbus
-import paramiko
 
-from . import const, daemon, exceptions, helper
+from . import const, daemon, helper
 
 LOGGER = logging.getLogger(__name__)
 
@@ -133,44 +131,20 @@ def handle_daemon(username, system=False):
 
 
 def handle(callback, *args, **kwargs):
-    """Handle the given callback and catch all exceptions if some should
-       arise.
+    """Handle the given callback, print any errors and exit if necessary.
 
     Args:
         callback (function): The function to execute.
         *args: Arguments to pass to the callback.
         **kargs: Keyword-Arguments to pass to the callback.
     """
-    try:
-        return callback(*args, **kwargs)
+    success, res = helper.error_handler(callback, *args, **kwargs)
 
-    except paramiko.ssh_exception.SSHException as e:
-        print(e)
-        LOGGER.debug(traceback.format_exc())
+    if not success:
+        print(res)
+        sys.exit(1)
 
-    except paramiko.ssh_exception.NoValidConnectionsError as e:
-        print(e)
-        LOGGER.debug(traceback.format_exc())
-
-    except KeyError as e:
-        print('Unable to connect to {}'.format(e))
-
-    except dbus.exceptions.DBusException:
-        print('Unable to connect to daemon. Is one running?')
-        LOGGER.debug(traceback.format_exc())
-
-    except exceptions.BackupNotFoundException as e:
-        print(e)
-
-    except KeyboardInterrupt:
-        print('Process canceled.')
-
-    except Exception as e:
-        print('Something bad happend. Try increasing the log-level.')
-        print(e)
-        LOGGER.debug(traceback.format_exc())
-
-    sys.exit(1)
+    return res
 
 
 def main():

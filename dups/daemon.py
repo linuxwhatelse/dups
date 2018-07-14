@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 import threading
-import traceback
 
 import dbus
 import dbus.mainloop.glib
@@ -105,18 +104,17 @@ class Daemon(dbus.service.Object):
         dry_run = bool(dry_run)
 
         def _backup():
-            try:
-                config.Config.get().reload()
+            config.Config.get().reload()
 
-                self._notify('Starting new backup')
-                bak, status = helper.create_backup(dry_run)
+            self._notify('Starting new backup')
+            success, res = helper.error_handler(helper.create_backup, dry_run)
+
+            if success:
+                bak, status = res
                 self._notify('Finished backup', status.message)
-
-            except Exception as e:
-                self._notify('Coulnd\'t start backup', str(e),
+            else:
+                self._notify('Could not start backup', res,
                              utils.NPriority.URGENT)
-                LOGGER.info(e)
-                LOGGER.debug(traceback.format_exc())
 
         threading.Thread(target=_backup).start()
 
@@ -136,19 +134,17 @@ class Daemon(dbus.service.Object):
         dry_run = bool(dry_run)
 
         def _restore():
-            try:
-                config.Config.get().reload()
+            config.Config.get().reload()
 
-                self._notify('Starting restore')
-                bak, status = helper.restore_backup(items, name, target,
-                                                    dry_run)
+            self._notify('Starting restore')
+            success, res = helper.error_handler(helper.restore_backup, items,
+                                                name, target, dry_run)
+            if success:
+                bak, status = res
                 self._notify('Finished restore', status.message)
-
-            except Exception as e:
-                self._notify('Coulnd\'t start restore', str(e),
+            else:
+                self._notify('Could not start backup', res,
                              utils.NPriority.URGENT)
-                LOGGER.info(e)
-                LOGGER.debug(traceback.format_exc())
 
         threading.Thread(target=_restore).start()
 
