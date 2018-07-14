@@ -35,6 +35,11 @@ def get_data_files():
             ('/etc/dbus-1/system.d/',
              ['data/etc/dbus-1/system.d/de.linuxwhatelse.dups.conf']))
 
+    if 'desktop' in include_data_files:
+        data_files.append(
+            ('/usr/share/applications/',
+             ['data/usr/share/applications/de.linuxwhatelse.dups.desktop']))
+
     return data_files
 
 

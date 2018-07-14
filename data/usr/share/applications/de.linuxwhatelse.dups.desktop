@@ -1,0 +1,8 @@
+# Required for notifications to work with e.g. gnome
+[Desktop Entry]
+Name=dups
+Comment=It deduplicates things - Backup as simple as possible.
+Version=1.0
+Type=Application
+Categories=Utility;
+Hidden=true
