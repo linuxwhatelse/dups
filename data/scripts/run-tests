@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+if [ $# -lt 3 ]; then
+    echo "usage: $0 [DIST] [PYTHON] [PKG_DIR]"
+    exit 1
+fi
+
+DIST="$1"
+PYTHON="$2"
+PKG_DIR="$3"
+
+name=dups-${DIST}
+
+sudo docker build -f data/docker/Dockerfile.${DIST} \
+    --pull --tag linuxwhatelse/dups-${DIST} .
+
+sudo docker run --name ${name} --rm -it -v $(pwd):/dups:ro linuxwhatelse/${name} \
+      /dups/data/scripts/travis/test-install.sh ${PKG_DIR}
+
+sudo docker run --name ${name} --rm -it -v $(pwd):/dups:ro linuxwhatelse/${name} \
+      /dups/data/scripts/travis/test-dups.sh ${PYTHON}
