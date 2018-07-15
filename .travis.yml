@@ -1,21 +1,16 @@
 env:
   matrix:
-    - DIST=arch
-      DOCKERFILE=data/docker/Dockerfile.arch
+    - DIST=archlinux
       PYTHON=python
-      PIP=pip
+      PKG_DIR=data/pkg/archlinux/
 
     - DIST=bionic
-      DOCKERFILE=data/docker/Dockerfile.bionic
       PYTHON=python3
-      PIP=pip3
-      BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
+      PKG_DIR=data/pkg/debian/
 
     - DIST=stretch
-      DOCKERFILE=data/docker/Dockerfile.stretch
       PYTHON=python3
-      PIP=pip3
-      BUILD_SCRIPT=/dups/data/pkg/debian/build.sh
+      PKG_DIR=data/pkg/debian/
 
 sudo: required
 language: generic
@@ -24,20 +19,15 @@ services:
   - docker
 
 install:
-  - docker build -f ${DOCKERFILE} --pull --tag linuxwhatelse/dups-${DIST} .
+  - |
+    docker build -f data/docker/Dockerfile.${DIST} \
+      --pull --tag linuxwhatelse/dups-${DIST} .
 
 script:
   - |
     docker run --rm -it -v $(pwd):/dups:ro linuxwhatelse/dups-${DIST} \
-      /dups/data/scripts/travis/test-install.sh ${PIP}
+      /dups/data/scripts/travis/test-install.sh ${PKG_DIR}
 
   - |
     docker run --rm -it -v $(pwd):/dups:ro linuxwhatelse/dups-${DIST} \
       /dups/data/scripts/travis/test-dups.sh ${PYTHON}
-
-after_success:
-  - |
-    if [ ! -z ${BUILD_SCRIPT} ]; then
-      docker run --rm -it -v $(pwd):/dups linuxwhatelse/dups-${DIST} \
-        ${BUILD_SCRIPT}
-    fi

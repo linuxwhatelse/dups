@@ -11,7 +11,7 @@ cp -r /dups /root/dups
 cd /root/dups
 
 
-# SSH server is required for remote testsA
+# SSH server is required for remote tests
 /usr/sbin/sshd
 
 # Run all unittests

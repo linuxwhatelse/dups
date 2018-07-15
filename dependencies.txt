@@ -13,6 +13,7 @@ rsync
 dbus
 python3-gi
 libdbus-1-dev
+libglib2.0-dev
 python3-dbus
 python3-paramiko
 python3-ruamel.yaml

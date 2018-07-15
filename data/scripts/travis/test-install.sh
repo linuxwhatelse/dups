@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 if [ $# -lt 1 ]; then
-    echo "usage: $0 [PIP]"
+    echo "usage: $0 [PKG_DIR]"
     exit 1
 fi
 
-PIP="$1"
+PKG_DIR="$1"
 
 cp -r /dups /root/dups
 cd /root/dups
 
-export INCLUDE_DATA_FILES='systemd dbus'
-${PIP} install .
+${PKG_DIR}/build.sh
+${PKG_DIR}/install.sh
 
 # Check if dups command is available
 dups --help
@@ -21,3 +21,5 @@ ls /usr/lib/systemd/user/dups.service
 ls /usr/lib/systemd/system/dups@.service
 
 ls /etc/dbus-1/system.d/de.linuxwhatelse.dups.conf
+
+ls /usr/share/applications/de.linuxwhatelse.dups.desktop
