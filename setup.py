@@ -65,7 +65,7 @@ setup(
         'data/config.yaml',
     ]},
     data_files=get_data_files(),
-    scripts=['bin/dups'],
+    scripts=['data/bin/dups'],
     install_requires=get_requirements(),
     zip_safe=False,
 )
