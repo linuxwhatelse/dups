@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 1 ]; then
-    echo "usage: $0 [PKG_DIR]"
+if [ $# -lt 2 ]; then
+    echo "usage: $0 [PKG_DIR] [RELEASE_FILE]"
     exit 1
 fi
 
 PKG_DIR="$1"
+RELEASE_FILE="$2"
 
-cp -r /dups /root/dups
-cd /root/dups
+cp -r /dups /tmp/dups
+cd /tmp/dups
 
-${PKG_DIR}/build.sh
-${PKG_DIR}/install.sh
+${PKG_DIR}/install.sh ${RELEASE_FILE}
 
 # Check if dups command is available
 dups --help

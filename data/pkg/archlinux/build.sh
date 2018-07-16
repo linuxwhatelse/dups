@@ -2,17 +2,19 @@
 
 cd "$(dirname "$0")"
 
-TARGET_DIR=$(pwd)
+if [ $# -lt 1 ]; then
+    echo "usage: $0 [RELEASE_FILE]"
+    exit 1
+fi
 
-# We can't build in /root so we have make a copy
-BUILD_DIR="/tmp/dups-build"
-cp -r "$(realpath ../../../)" "${BUILD_DIR}"
+RELEASE_FILE="$1"
 
-cd "${BUILD_DIR}/data/pkg/archlinux"
-mkdir -p src && ln -s "${BUILD_DIR}" "./src/python-dups"
+SRC_DIR="$(realpath ../../../)"
 
-chown -R nobody.nobody "${BUILD_DIR}"
+mkdir -p src
+ln -s "${SRC_DIR}" "./src/python-dups"
 
+chown -R nobody.nobody "${SRC_DIR}"
 sudo -u nobody makepkg --noextract
 
-cp *.pkg.tar.xz "${TARGET_DIR}"
+mv *.pkg.tar.xz "${RELEASE_FILE}"

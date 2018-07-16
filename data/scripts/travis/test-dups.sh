@@ -7,8 +7,8 @@ fi
 
 PYTHON="$1"
 
-cp -r /dups /root/dups
-cd /root/dups
+cp -r /dups /tmp/dups
+cd /tmp/dups
 
 
 # SSH server is required for remote tests
