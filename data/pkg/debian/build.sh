@@ -15,7 +15,9 @@ PKG_DIR="$(pwd)"
 cd "$(realpath ../../../)"
 
 python3 setup.py --command-packages=stdeb.command \
-    sdist_dsc --dist-dir ${PKG_DIR} \
+    sdist_dsc \
+        --extra-cfg-file "${PKG_DIR}/stdeb.cfg" \
+        --dist-dir "${PKG_DIR}" \
     bdist_deb
 
 cd "${PKG_DIR}"
