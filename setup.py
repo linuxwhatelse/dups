@@ -33,7 +33,7 @@ def get_data_files():
     if 'dbus' in include_data_files:
         data_files.append(
             ('/etc/dbus-1/system.d/',
-             ['data/etc/dbus-1/system.d/de.linuxwhatelse.dups.conf']))
+             ['data/etc/dbus-1/system.d/de.linuxwhatelse.dups.daemon.conf']))
 
     if 'desktop' in include_data_files:
         data_files.append(

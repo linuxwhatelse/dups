@@ -20,6 +20,6 @@ dups --help
 ls /usr/lib/systemd/user/dups.service
 ls /usr/lib/systemd/system/dups@.service
 
-ls /etc/dbus-1/system.d/de.linuxwhatelse.dups.conf
+ls /etc/dbus-1/system.d/de.linuxwhatelse.dups.daemon.conf
 
 ls /usr/share/applications/de.linuxwhatelse.dups.desktop

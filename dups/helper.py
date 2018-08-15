@@ -173,7 +173,7 @@ def notify(title, body=None, priority=None, icon=const.APP_ICON):
     if not cfg.notify:
         return
 
-    utils.notify(const.DBUS_NAME, title, body, priority, icon)
+    utils.notify(const.APP_ID, title, body, priority, icon)
 
 
 def get_backups(include_valid=True, include_invalid=True):

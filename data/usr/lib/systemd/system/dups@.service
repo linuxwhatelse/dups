@@ -3,7 +3,7 @@ Description=dups
 
 [Service]
 Type=dbus
-BusName=de.linuxwhatelse.dups
+BusName=de.linuxwhatelse.dups.daemon
 ExecStart=/usr/bin/dups --system-daemon --user %i
 Restart=on-failure
 RestartSec=3
