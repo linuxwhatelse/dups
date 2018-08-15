@@ -5,5 +5,5 @@ Comment=It deduplicates things - Backup as simple as possible.
 Version=1.0
 Type=Application
 Categories=Utility;
+NoDisplay=true
 Icon=security-high
-Hidden=true
