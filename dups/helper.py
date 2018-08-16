@@ -66,8 +66,6 @@ def configure_rsync():
     sync.ssh_bin = cfg.rsync['ssh_bin']
 
     sync.ssh_config_file = cfg.target['ssh_config_file']
-    sync.ssh_key_file = cfg.target['ssh_key_file']
-    sync.ssh_known_hosts_file = cfg.target['ssh_known_hosts_file']
 
     sync.acls = cfg.rsync['acls']
     sync.xattrs = cfg.rsync['xattrs']
@@ -85,9 +83,7 @@ def get_configured_io():
     cfg = config.Config.get()
 
     t = cfg.target
-    return utils.IO.get(t['host'], t['port'], t['username'],
-                        t['ssh_config_file'], t['ssh_key_file'],
-                        t['ssh_known_hosts_file'])
+    return utils.IO.get(t['host'], t['ssh_config_file'])
 
 
 @contextmanager

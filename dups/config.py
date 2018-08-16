@@ -134,15 +134,8 @@ class Config:
         if t['path']:
             t['path'] = os.path.expanduser(t['path'])
 
-        if t['ssh_key_file']:
-            t['ssh_key_file'] = os.path.expanduser(t['ssh_key_file'])
-
         if t['ssh_config_file']:
             t['ssh_config_file'] = os.path.expanduser(t['ssh_config_file'])
-
-        if t['ssh_known_hosts_file']:
-            t['ssh_known_hosts_file'] = os.path.expanduser(
-                t['ssh_known_hosts_file'])
 
         return t
 

@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 from typing import List, TypeVar
 
@@ -9,19 +10,15 @@ _RSYNC = TypeVar('_RSYNC', bound='rsync')
 class Path(object):
     """Represents a local or remote path to be used by `Rsync`_."""
 
-    def __init__(self, path, host=None, port=None, username=None):
+    def __init__(self, path, host=None):
         """Create a new instance of `Path`_.
 
-        Args:
+        Args:>
             path (str): Path to the local/remote file/folder.
             host (str): The hostname if it's a remote item.
-            port (int): The port if it's a remote item.
-            username (str): The username if it's a remote item.
         """
         self.path = path
         self.host = host
-        self.port = port
-        self.username = username
 
     @property
     def is_local(self):
@@ -29,19 +26,14 @@ class Path(object):
         return self.host in ('', None)
 
     @property
-    def resolved_path(self):
-        """str: If local, the path origianlly provided. If remote,
-           either <host>:<path> or <user>@<host>:<path> depending on if a
-           username exists.
+    def resolved(self):
+        """str: If local, the path origianlly provided.
+           If remote, <host>:<path>
         """
         if self.is_local:
             return self.path
 
-        dest = '{host}:{dest}'.format(host=self.host, dest=self.path)
-        if self.username:
-            dest = '{user}@{dest}'.format(user=self.username, dest=dest)
-
-        return dest
+        return '{host}:{dest}'.format(host=self.host, dest=self.path)
 
 
 class Status(object):
@@ -126,9 +118,7 @@ class rsync(object):
     rsync_bin = '/usr/bin/rsync'
     ssh_bin = '/usr/bin/ssh'
 
-    ssh_key_file = None
-    ssh_config_file = None
-    ssh_known_hosts_file = None
+    ssh_config_file = '~/.ssh/config'
 
     acls = True
     xattrs = True
@@ -185,15 +175,8 @@ class rsync(object):
             'NumberOfPasswordPrompts=0'
         ]
 
-        if self.ssh_key_file:
-            cmd.extend(('-i', self.ssh_key_file))
-
-        if self.ssh_config_file:
+        if self.ssh_config_file and os.path.exists(self.ssh_config_file):
             cmd.extend(('-F', self.ssh_config_file))
-
-        if self.ssh_known_hosts_file:
-            cmd.extend(('-o', 'UserKnownHostsFile={}'.format(
-                self.ssh_known_hosts_file)))
 
         return cmd
 
@@ -254,13 +237,10 @@ class rsync(object):
         if not excludes:
             excludes = []
 
-        if not target.is_local and target.port and target.port != 22:
-            ssh_cmd.extend(('-p', str(target.port)))
-
         cmd[1:1] = ['-e', ' '.join(ssh_cmd)]
 
         includes = list(
-            i.resolved_path if isinstance(i, Path) else i for i in includes)
+            i.resolved if isinstance(i, Path) else i for i in includes)
 
         tmp = []
         for e in excludes:
@@ -274,7 +254,7 @@ class rsync(object):
         cmd.extend(includes)
         cmd.extend(excludes)
 
-        cmd.append(target.resolved_path)
+        cmd.append(target.resolved)
 
         for line in self._exec(cmd):
             LOGGER.info(line)

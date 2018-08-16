@@ -269,8 +269,7 @@ class Backup(object):
         if latest:
             link_dest = latest.backup_data_dir
 
-        target = rsync.Path(self.backup_data_dir, self._io.host, self._io.port,
-                            self._io.username)
+        target = rsync.Path(self.backup_data_dir, self._io.host)
         status = sync.sync(target, items, excludes, link_dest)
 
         if not dry_run and status.is_complete:
@@ -316,9 +315,7 @@ class Backup(object):
                 item = os.path.join(self.backup_data_dir, '.',
                                     item.lstrip('/'))
 
-            sources.append(
-                rsync.Path(item, self._io.host, self._io.port,
-                           self._io.username))
+            sources.append(rsync.Path(item, self._io.host))
 
         status = sync.sync(target, sources)
 

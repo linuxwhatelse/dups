@@ -30,8 +30,7 @@ class Test_Backup(unittest.TestCase):
         if target is 'local':
             return utils.IO.get()
         elif target == 'remote':
-            return utils.IO.get(context.SSH_HOST, context.SSH_PORT,
-                                context.SSH_USER)
+            return utils.IO.get(context.SSH_HOST)
         return None
 
     def get_valid(self, io):

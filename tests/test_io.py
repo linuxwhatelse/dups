@@ -4,9 +4,9 @@ import os
 import shutil
 import unittest
 
-import paramiko
-from ddt import data, ddt
 from dups import utils
+
+from ddt import data, ddt
 
 
 @ddt
@@ -22,8 +22,7 @@ class Test_IO(unittest.TestCase):
         if target is 'local':
             return utils.IO.get()
         elif target == 'remote':
-            return utils.IO.get(context.SSH_HOST, context.SSH_PORT,
-                                context.SSH_USER)
+            return utils.IO.get(context.SSH_HOST)
         return None
 
     @data('local', 'remote')
@@ -38,9 +37,8 @@ class Test_IO(unittest.TestCase):
         io.close()
 
     def test_invalid(self):
-        self.assertRaises(
-            (OSError, paramiko.ssh_exception.NoValidConnectionsError),
-            utils.IO.get, context.SSH_HOST, 23)
+        self.assertRaises(Exception, utils.IO.get, context.SSH_HOST,
+                          context.SSH_CONFIG_INVALID)
 
     def test_validate_absolute(self):
         @utils.validate_absolute

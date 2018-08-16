@@ -74,19 +74,21 @@ $ cp data/systemd/dups.service ~/.config/systemd/user/
 
 
 ## Configuration
-`dups` reads its config from `~/.config/dups/config.yaml` (create it if it
-doesn't exist) and combines it with default values which you
-can find [here](dups/data/config.yaml).
+`dups` reads its configuration from `~/.config/dups/config.yaml` (create it if
+it doesn't exist).  
+It than combines it with some [default values](dups/data/config.yaml).  
+  
+`dups` will also read your [ssh config file](https://www.ssh.com/ssh/config/)
+(unless configured differently) which allows further configuration of the
+target.
 
-Hence a basic user config would look something like this:
+A basic config would look something like this:
 ```yaml
+# ~/.config/dups/config.yaml
 target:
   path: '/absolute/path/to/remote/backup/directory'
   host: 'backup-server-hostname'
-  username: 'root'
 ```
-`dups` can read your `ssh_config` so you may only specify a `path` and `host`.
-
 
 ## Usage
 `dups`'s help text is your friend :)

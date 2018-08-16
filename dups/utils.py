@@ -155,25 +155,16 @@ class IO:
     _ssh = None
     _sftp = None
 
-    def __init__(self, host=None, port=None, username=None, config_file=None,
-                 key_file=None, known_hosts_file=None):
+    def __init__(self, host=None, config_file=None):
         """Create a new instance of `IO`_.
            Using `IO.get`_ is the preferred method.
 
         Args:
             See `IO.get`_ for a description of the arguments.
-
-        Raises:
-            ValueError: If an invalid `key_file` was supplied while being
-                a remote instance.
         """
 
         self._host = host
-        self._port = port
-        self._username = username
         self._config_file = config_file
-        self._key_file = key_file
-        self._known_hosts_file = known_hosts_file
 
         self._connect_remote()
 
@@ -188,30 +179,23 @@ class IO:
         self.__del__()
 
     @classmethod
-    def get(cls, host=None, port=None, username=None, config_file=None,
-            key_file=None, known_hosts_file=None) -> _IO:
+    def get(cls, host=None, config_file=None) -> _IO:
         """Get a instance of `IO`_ for the given arguments.
 
         Args:
             host (str): If remote, the host to connect to.
-            port (int): If remote, the port on which to connect to.
-            username (str): If remote, the username with wich to connect.
-            key_file (str): If remote, the absolute path a ssh private key
-                file to allow password-less authentication.
-            known_hosts_file (str): If remote, the absolute path to the
-                known_hosts to use.
+            config_file (str): If remote, the absolute path to the
+                an ssh config file.
 
         Returns:
             IO: A existing (or new if it's the first call)
                 instance of `IO`_ for the given arguments.
         """
-        key = '{}_{}_{}_{}'.format(host, port, username, config_file, key_file)
+        key = '{}_{}'.format(host, config_file)
 
         if key not in cls.__instances:
-            cls.__instances[key] = cls(host, port, username, config_file,
-                                       key_file, known_hosts_file)
-
-        cls.__instances[key]._instance_key = key
+            cls.__instances[key] = cls(host, config_file)
+            cls.__instances[key]._instance_key = key
         return cls.__instances[key]
 
     def _connect_remote(self):
@@ -220,27 +204,25 @@ class IO:
             return
 
         self._ssh = paramiko.client.SSHClient()
-
-        self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-        if self._known_hosts_file:
-            self._ssh.load_host_keys(self._known_hosts_file)
+        self._ssh.load_system_host_keys()
+        self._ssh.set_missing_host_key_policy(paramiko.client.WarningPolicy())
 
         cfg = {
             'hostname': self.host,
-            'port': self.port,
-            'user': self.username,
-            'identityfile': self.key_file
+            'port': 22,
+            'user': None,
+            'identityfile': os.path.expanduser('~/.ssh/id_rsa'),
         }
 
-        if self.config_file:
+        if self.config_file and os.path.exists(self.config_file):
             ssh_config = paramiko.SSHConfig()
-            if os.path.exists(self.config_file):
-                with open(self.config_file) as f:
-                    ssh_config.parse(f)
+            with open(self.config_file) as f:
+                ssh_config.parse(f)
 
             cfg = {**cfg, **ssh_config.lookup(self.host)}
 
         self._ssh.connect(cfg['hostname'], int(cfg['port']), cfg['user'],
+                          look_for_keys=False,
                           key_filename=cfg['identityfile'])
 
         self._sftp = self._ssh.open_sftp()
@@ -251,34 +233,9 @@ class IO:
         return self._host
 
     @property
-    def port(self):
-        """int: The port provided while creating this instance."""
-        return self._port
-
-    @property
-    def username(self):
-        """str: The username provided while creating this instance."""
-        return self._username
-
-    @property
-    def password(self):
-        """str: The password provided while creating this instance."""
-        return self._password
-
-    @property
     def config_file(self):
         """str: The key_file provided while creating this instance."""
         return self._config_file
-
-    @property
-    def key_file(self):
-        """str: The key_file provided while creating this instance."""
-        return self._key_file
-
-    @property
-    def known_hosts_file(self):
-        """str: The known_hosts_file provided while creating this instance."""
-        return self._known_hosts_file
 
     @property
     def is_local(self):

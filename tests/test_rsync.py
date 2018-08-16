@@ -14,13 +14,11 @@ class Test_Path(unittest.TestCase):
         p = rsync.Path(context.TEST_DIR)
         self.assertTrue(p.is_local)
 
-        p = rsync.Path(context.TEST_DIR, '', context.SSH_PORT,
-                       context.SSH_USER)
+        p = rsync.Path(context.TEST_DIR)
         self.assertTrue(p.is_local)
 
     def test_remote(self):
-        p = rsync.Path(context.TEST_DIR, context.SSH_HOST, context.SSH_PORT,
-                       context.SSH_USER)
+        p = rsync.Path(context.TEST_DIR, context.SSH_HOST)
         self.assertTrue(not p.is_local)
 
 
@@ -105,8 +103,7 @@ class Test_rsync(unittest.TestCase):
         del expected_data['test.dir']['dir2']
 
         # Send the files
-        target = rsync.Path(context.TMP_DIR, context.SSH_HOST,
-                            context.SSH_PORT, context.SSH_USER)
+        target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
         sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
                   excludes=['**/dir2/.gitkeep'])
 
