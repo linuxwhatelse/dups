@@ -34,6 +34,9 @@ def add_logging_handler(file_name):
     cfg = config.Config.get()
     usr = user.User.get()
 
+    if not os.path.exists(usr.cache_dir):
+        os.makedirs(usr.cache_dir)
+
     logfile = os.path.join(usr.cache_dir, file_name)
     do_rollover = os.path.exists(logfile)
 
