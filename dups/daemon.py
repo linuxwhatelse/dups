@@ -18,7 +18,7 @@ class Daemon(dbus.service.Object):
     NOTIFY_SIGNAL = 'Notify'
     system = False
 
-    def __init__(self, bus, path):
+    def __init__(self, bus, path, usr):
         """Create a new instance of `Daemon`_.
            Use `Daemon.run`_ to start a automatically created instance.
 
@@ -33,6 +33,7 @@ class Daemon(dbus.service.Object):
 
         self.path = path
         self.bus = bus
+        self.usr = usr
 
         if not self.system:
             sbus = dbus.SystemBus()
@@ -41,7 +42,7 @@ class Daemon(dbus.service.Object):
                                      path=self.path)
 
     @classmethod
-    def run(cls, user, system=False):
+    def run(cls, usr, system=False):
         """Register with dbus and start the daemon."""
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
@@ -58,9 +59,9 @@ class Daemon(dbus.service.Object):
 
         mainloop = gi.repository.GLib.MainLoop()
 
-        path = os.path.join(const.DBUS_PATH, user)
+        path = os.path.join(const.DBUS_PATH, usr.user)
 
-        daemon = cls(bus, path)
+        daemon = cls(bus, path, usr)
         daemon.mainloop = mainloop
 
         try:

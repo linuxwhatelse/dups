@@ -25,14 +25,13 @@ class NPriority:
     URGENT = Gio.NotificationPriority.URGENT
 
 
-def add_logging_handler(file_name):
+def add_logging_handler(file_name, usr):
     """Add logging handler for all configured loggers.
 
     Args:
         file_name (str): The file name to write logs into.
     """
     cfg = config.Config.get()
-    usr = user.User.get()
 
     if not os.path.exists(usr.cache_dir):
         os.makedirs(usr.cache_dir)

@@ -24,26 +24,23 @@ def configure_logger():
         logging.getLogger(name).setLevel(level)
 
 
-def prepare_env(username):
-    usr = user.User.get()
-    usr.set_user(username)
-
+def prepare_env(usr):
     os.environ['USER'] = usr.user
     os.environ['HOME'] = usr.home
     os.environ['XDG_RUNTIME_DIR'] = usr.xdg_runtime_dir
 
 
-def prepare_config(config_file=None):
+def prepare_config(config_file=None, usr=None):
     try:
         if config_file:
             config_file = os.path.abspath(config_file)
         else:
-            usr = user.User.get()
+            if usr is None:
+                usr = user.User()
             config_file = usr.config_file
 
         cfg = config.Config.get()
         cfg.config_file = config_file
-        cfg.reload()
 
     except FileNotFoundError:
         print('The config file "{}" does not exist.'.format(cfg.config_file))
@@ -57,13 +54,13 @@ def prepare_config(config_file=None):
     return cfg
 
 
-def configure_rsync(username):
+def configure_rsync(usr):
     """Configure rsync based on the config file."""
     cfg = config.Config.get()
     sync = rsync.rsync.get()
 
     sync.rsync_bin = cfg.rsync['rsync_bin']
-    sync.ssh_bin = '{} {} {}'.format(const.SSH_WRAPPER_SCRIPT, username,
+    sync.ssh_bin = '{} {} {}'.format(const.SSH_WRAPPER_SCRIPT, usr.user,
                                      cfg.rsync['ssh_bin'])
 
     sync.ssh_config_file = cfg.target['ssh_config_file']
@@ -199,7 +196,7 @@ def print_backups():
         print(b.name, '\t', b.name_pretty, '\t', valid)
 
 
-def create_backup(dry_run=False,
+def create_backup(usr, dry_run=False,
                   client=None) -> Tuple[backup.Backup, rsync.Status]:
     """Creates a new backup based on the users configuration.
 
@@ -219,7 +216,7 @@ def create_backup(dry_run=False,
         client.backup(dry_run)
         return None, None
     else:
-        utils.add_logging_handler('backup.log')
+        utils.add_logging_handler('backup.log', usr)
 
         with configured_io() as io:
             bak = backup.Backup.new(io, cfg.target['path'])
@@ -229,7 +226,7 @@ def create_backup(dry_run=False,
             return bak, status
 
 
-def restore_backup(items=None, name=None, target=None, dry_run=False,
+def restore_backup(usr, items=None, name=None, target=None, dry_run=False,
                    client=None):
     """Starts a new restore based on the users configuration.
 
@@ -267,7 +264,7 @@ def restore_backup(items=None, name=None, target=None, dry_run=False,
             if target:
                 target = os.path.abspath(target)
 
-            utils.add_logging_handler('restore.log')
+            utils.add_logging_handler('restore.log', usr)
 
             status = bak.restore(target, items, dry_run)
             return bak, status

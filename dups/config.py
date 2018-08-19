@@ -4,7 +4,7 @@ from typing import TypeVar
 
 import ruamel.yaml
 
-from . import const, user, utils
+from . import const, utils
 
 _CONFIG = TypeVar('_CONFIG', bound='Config')
 
@@ -25,9 +25,6 @@ class Config:
     def __init__(self):
         """Create a new config instance.
            Using `Config.get`_ is the preferred way."""
-        usr = user.User.get()
-
-        self._config_file = usr.config_file
         self._config_template = const.CONFIG_TEMPLATE_FILE
 
         self._template = {}

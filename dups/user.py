@@ -8,24 +8,20 @@ _USER = TypeVar('_USER', bound='User')
 
 
 class User(object):
-    __instance = None
+    def __init__(self, user=None):
+        if user is None:
+            self.__user = getpass.getuser()
+        else:
+            try:
+                pwd.getpwnam(user)
+                self.__user = user
 
-    def __init__(self):
-        self.user = getpass.getuser()
+            except KeyError:
+                raise ValueError('User "{}" is invalid.'.format(user))
 
-    @classmethod
-    def get(cls) -> _USER:
-        if cls.__instance is None:
-            cls.__instance = cls()
-        return cls.__instance
-
-    def set_user(self, user):
-        try:
-            pwd.getpwnam(user)
-            self.user = user
-
-        except KeyError:
-            raise ValueError('Invalid user')
+    @property
+    def user(self):
+        return self.__user
 
     @property
     def uid(self):

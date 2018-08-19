@@ -5,7 +5,7 @@ import sys
 
 import dbus
 
-from . import const, daemon, helper
+from . import const, daemon, helper, user
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,9 +119,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def handle_daemon(username, system=False):
+def handle_daemon(usr, system=False):
     try:
-        daemon.Daemon.run(username, system)
+        daemon.Daemon.run(usr, system)
 
     except dbus.exceptions.DBusException:
         print('The system daemon requires root privileges.')
@@ -151,27 +151,34 @@ def main():
     """Entrypoint for dups."""
     args = parse_args()
 
-    helper.prepare_env(args.user)
+    try:
+        usr = user.User(args.user)
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+
+    helper.prepare_env(usr)
 
     # Exits if necessary
-    cfg = helper.prepare_config(args.config)
+    cfg = helper.prepare_config(args.config, usr)
     if cfg is None:
         sys.exit(1)
 
     helper.configure_logger()
-    helper.configure_rsync(args.user)
+    helper.configure_rsync(usr)
 
     LOGGER.debug('Using config: %s', cfg.config_file)
 
     if args.daemon or args.system_daemon:
-        sys.exit(handle_daemon(args.user, args.system_daemon))
+        sys.exit(handle_daemon(usr, args.system_daemon))
 
     dbus_client = None
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
     if args.backup:
-        bak, status = handle(helper.create_backup, args.dry_run, dbus_client)
+        bak, status = handle(helper.create_backup, usr, args.dry_run,
+                             dbus_client)
 
         if status:
             print(status.message)
@@ -183,7 +190,7 @@ def main():
         name = args.restore
         if args.restore == 'latest':
             name = None
-        bak, status = handle(helper.restore_backup, args.items, name,
+        bak, status = handle(helper.restore_backup, usr, args.items, name,
                              args.target, args.dry_run, dbus_client)
         if status:
             print(status.message)
