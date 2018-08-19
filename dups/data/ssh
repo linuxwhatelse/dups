@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+#
+#   SSH wrapper script to be used with rsync allowing for a specific users
+#   SSH related files (~/.ssh/config, ~/.ssh/id_rsa, ~/.ssh/known_hosts) to be
+#   read when run as root.
+#   If executed as none root, it will behave just like ssh would normally.
+
+if [ $# -lt 3 ]; then
+    echo "usage: $0 [USER] [SSH_BINARY] [ARGUMENTS...]"
+    exit 1
+fi
+
+USER="$1"
+SSH_BIN="$2"
+
+SSH_CMD="${SSH_BIN} ${@:3}"
+if [ `id -u` -eq 0 ]; then
+    runuser -u ${USER} -- ${SSH_CMD}
+else
+    ${SSH_CMD}
+fi

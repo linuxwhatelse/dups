@@ -159,7 +159,7 @@ def main():
         sys.exit(1)
 
     helper.configure_logger()
-    helper.configure_rsync()
+    helper.configure_rsync(args.user)
 
     LOGGER.debug('Using config: %s', cfg.config_file)
 

@@ -10,8 +10,8 @@ target:
   # This is how you make additional configurations for your target.
   # Evaluated are:
   #   HostName, User, Port and IdentityFile
-  ssh_config_file: '~/.ssh/config'
- 
+  ssh_config_file: ~/.ssh/config
+
 # Whether or not the daemon should post notifications.
 notify: True
 

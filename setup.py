@@ -63,6 +63,7 @@ setup(
     packages=find_packages(),
     package_data={'dups': [
         'data/config.yaml',
+        'data/ssh',
     ]},
     data_files=get_data_files(),
     scripts=['data/bin/dups'],

@@ -57,13 +57,14 @@ def prepare_config(config_file=None):
     return cfg
 
 
-def configure_rsync():
+def configure_rsync(username):
     """Configure rsync based on the config file."""
     cfg = config.Config.get()
     sync = rsync.rsync.get()
 
     sync.rsync_bin = cfg.rsync['rsync_bin']
-    sync.ssh_bin = cfg.rsync['ssh_bin']
+    sync.ssh_bin = '{} {} {}'.format(const.SSH_WRAPPER_SCRIPT, username,
+                                     cfg.rsync['ssh_bin'])
 
     sync.ssh_config_file = cfg.target['ssh_config_file']
 

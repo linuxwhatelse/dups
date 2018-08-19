@@ -27,5 +27,4 @@ DBUS_PATH = '/de/linuxwhatelse/dups'
 CONFIG_TEMPLATE_FILE = os.path.join(HERE, 'data', 'config.yaml')
 DEFAULT_RESTORE_PATH = '/'
 
-SSH_DEFAULT_KEY_FILE = os.path.expanduser('~/.ssh/id_rsa')
-SSH_DEFAULT_HOSTS_FILE = os.path.expanduser('~/.ssh/known_hosts')
+SSH_WRAPPER_SCRIPT = os.path.join(HERE, 'data', 'ssh')
