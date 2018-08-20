@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
 #   SSH wrapper script to be used with rsync allowing for a specific users
 #   SSH related files (~/.ssh/config, ~/.ssh/id_rsa, ~/.ssh/known_hosts) to be
