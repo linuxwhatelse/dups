@@ -4,7 +4,7 @@ import os
 import shutil
 import unittest
 
-from dups import rsync
+from dups import helper, rsync, const
 
 import utils as test_utils
 
@@ -128,6 +128,18 @@ class Test_rsync(unittest.TestCase):
         # Get and compare the structure of our sync target
         synced_data = test_utils.get_dir_struct(self.real_target)
         self.assertEqual(expected_data, synced_data)
+
+    def test_ssh_wrapper(self):
+        sync = rsync.rsync()
+        sync.ssh_bin = '{} root {}'.format(const.SSH_WRAPPER_SCRIPT,
+                                           sync.ssh_bin)
+        sync.dry_run = False
+
+        # Send the files
+        target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
+        status = sync.sync(target, [context.DATA_DIR])
+
+        self.assertEqual(status.exit_code, 0)
 
 
 if __name__ == '__main__':
