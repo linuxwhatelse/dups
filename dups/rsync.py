@@ -195,9 +195,12 @@ class rsync(object):
         if self._proc:
             raise RuntimeError('A process is already running!')
 
+        command = subprocess.list2cmdline(command)
+
         LOGGER.info('Executing rsync:')
-        LOGGER.info(subprocess.list2cmdline(command))
-        with subprocess.Popen(command, stdout=subprocess.PIPE,
+        LOGGER.info(command)
+
+        with subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, bufsize=1,
                               universal_newlines=True) as proc:
             self._proc = proc
@@ -239,12 +242,16 @@ class rsync(object):
 
         cmd[1:1] = ['-e', ' '.join(ssh_cmd)]
 
+        # Ensure PWD is "/" so source patterns always get expanded from the
+        # same base directory.
+        cmd[0:0] = ['cd', '/;']
+
         includes = list(
             i.resolved if isinstance(i, Path) else i for i in includes)
 
         tmp = []
         for e in excludes:
-            tmp.extend(('--exclude', e))
+            tmp.extend(('--exclude', "'{}'".format(e)))
         excludes = tmp
 
         if link_dest:
