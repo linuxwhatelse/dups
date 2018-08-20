@@ -108,7 +108,8 @@ class Daemon(dbus.service.Object):
             config.Config.get().reload()
 
             self._notify('Starting new backup')
-            success, res = helper.error_handler(helper.create_backup, dry_run)
+            success, res = helper.error_handler(helper.create_backup, self.usr,
+                                                dry_run)
 
             if success:
                 bak, status = res
@@ -138,8 +139,8 @@ class Daemon(dbus.service.Object):
             config.Config.get().reload()
 
             self._notify('Starting restore')
-            success, res = helper.error_handler(helper.restore_backup, items,
-                                                name, target, dry_run)
+            success, res = helper.error_handler(
+                helper.restore_backup, self.usr, items, name, target, dry_run)
             if success:
                 bak, status = res
                 self._notify('Finished restore', status.message)
