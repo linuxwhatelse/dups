@@ -1,0 +1,76 @@
+image: Ubuntu
+
+environment:
+  global:
+    SCRIPTS: /dups/data/scripts/travis
+
+  matrix:
+    # DIST: Distribution / Release name.
+    # PYTHON: Python executable name on the given dist.
+    # PKG_DIR: Relative path (inside the container) to the pacakge dir for the
+    #   given dist.
+    # RELEASE_FILE: Absolute path (inside the container) to where to
+    #   store the built release package.
+    - DIST: archlinux
+      PYTHON: python
+      PKG_DIR: data/pkg/archlinux
+      RELEASE_FILE: /builds/python-dups-${DIST}.pkg.tar.xz
+
+    - DIST: bionic
+      PYTHON: python3
+      PKG_DIR: data/pkg/debian
+      RELEASE_FILE: /builds/python3-dups-${DIST}.deb
+
+    - DIST: stretch
+      PYTHON: python3
+      PKG_DIR: data/pkg/debian
+      RELEASE_FILE: /builds/python3-dups-${DIST}.deb
+
+matrix:
+  fast_finish: true
+
+build: off
+
+services:
+  - docker
+
+install:
+  - sh: |
+      docker build -f data/docker/Dockerfile.${DIST} \
+        --pull --tag linuxwhatelse/dups-${DIST} .
+
+build_script:
+  # Build package for each distribution
+  - sh: |
+      docker run -v $(pwd):/dups:ro  -v $(pwd)/builds:/builds \
+        linuxwhatelse/dups-${DIST} \
+        ${SCRIPTS}/test-build.sh ${PKG_DIR} ${RELEASE_FILE}
+
+after_build:
+  # Try and install the previously built package
+  - sh: |
+      docker run -v $(pwd):/dups:ro  -v $(pwd)/builds:/builds \
+        linuxwhatelse/dups-${DIST} \
+        ${SCRIPTS}/test-install.sh ${PKG_DIR} ${RELEASE_FILE}
+
+test_script:
+  # Run all unittests
+  - sh: |
+      docker run -v $(pwd):/dups:ro linuxwhatelse/dups-${DIST} \
+        ${SCRIPTS}/test-dups.sh ${PYTHON}
+
+artifacts:
+  - path: builds/*
+
+deploy:
+  tag: pre-release
+  release: Pre-release builds
+  provider: GitHub
+  prerelease: true
+  force_update: true
+  auth_token:
+    secure: z6Y/Et2Hc/K7TPQCq/epSoqerDQFkh+4ukjzq1gaoWex8pmvJTm0/smZ5yhXnEBv
+  artifact: /.*/
+  on:
+    branch: master
+

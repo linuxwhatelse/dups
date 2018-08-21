@@ -2,6 +2,7 @@ dups
 ====
 [![Say Thanks!](https://img.shields.io/badge/say-thanks-e91e63.svg)](https://saythanks.io/to/tadly)
 [![Build Status](https://travis-ci.org/linuxwhatelse/dups.svg?branch=master)](https://travis-ci.org/linuxwhatelse/dups)
+[![Build status](https://ci.appveyor.com/api/projects/status/ia8xtstfs2bkxu8g/branch/master?svg=true)](https://ci.appveyor.com/project/tadly/dups/branch/master)
 
 **Even though I actively use `dups` already, it should still be considered alpha!**
 
