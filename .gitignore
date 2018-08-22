@@ -1,11 +1,12 @@
 /.vscode
 /.venv
 /tmp
+/wiki
 
 # setuptools build files
-/build
 /dist
 /dups.egg-info
 
+# python files
 *.py[co]
-
+__pycache__
