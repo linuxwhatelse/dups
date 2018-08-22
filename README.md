@@ -1,239 +1,101 @@
-dups
-====
+# dups
 [![Say Thanks!](https://img.shields.io/badge/say-thanks-e91e63.svg)](https://saythanks.io/to/tadly)
 [![Build status](https://ci.appveyor.com/api/projects/status/ia8xtstfs2bkxu8g/branch/master?svg=true)](https://ci.appveyor.com/project/tadly/dups/branch/master)
 
-**Even though I actively use `dups` already, it should still be considered alpha!**
-
-_It deduplicates things - Backup as simple as possible._
-
-As there was no linux backup solution that was simple and
-_to the point_-enough to fit my needs, I decided to write my own.
-
-`dups` is powered by `rsync` using the amazing `--link-dest` option to
-save space **and** time when backing up.
-
-What this does is it creates [hard links](https://en.wikipedia.org/wiki/Hard_link)
-to **unchanged** files from the previous backup meaning they don't have to be
-transfered again **and** do not take up additional disk space.
-
-Another priority of mine was the ability to acces backups without any special
-software.
-As each backup is just a _dumb_ replication of your local content, this is
-easily achieved.
+dups is a simple backup utility which uses [rsync](https://rsync.samba.org/)
+for the heavy lifting in the background and adds some sugar around it.  
+  
+To reduce disk space and subsequent backup times, dups relies on rsyncs
+`--link-dest` option which hardlinks to existing unchanged files.
 
 
-## Table of Contents
-* [Todo](#todo)
-* [Requirements](#requirements)
-  * [System dependencies](#system-dependencies)
-  * [Python dependencies](#python-dependencies)
-* [Installation](#installation)
-  * [archlinux](#archlinux)
-  * [Other](#other)
-* [Configuration](#configuration)
-* [Usage](#usage)
-  * [Including / Excluding items](#including-/-excluding-items)
-  * [Listing includes / excludes](#listing-includes-/-excludes)
-  * [Remove includes / excludes](#remove-includes-/-excludes)
-  * [Start a backup](#start-a-backup)
-  * [Delete a backup](#delete-a-backup)
-  * [Start a restore](#start-a-restore)
-  * [In the background](#in-the-background)
-* [Gotchas / FAQ](#gotchas-faq)
+## Motivation
+Beeing unable to find a backup utility which would allow me to...
+  * backup selected files and folders
+  * exclude files and folders based on their path or patterns
+  * easily access stored files without special tools  
+    (This includes the backup software itself)
+  * doesn't come with to much bloat
 
-## Todo
-A **Logo / App icon** is still very much needed.  
-If you feel like helping out, [here](https://github.com/linuxwhatelse/dups/issues/4)
-is where you can ask questions, post designs etc.  
-To anyone helping out, thank you very very much! I do really appreciate it!
+...I ended up writing my own.  
+This is not to say other software is bad, just not what I was
+looking for.
 
 
-## Requirements
-### System dependencies
+## Getting Started
+See [deployment](#deployment) for notes on how to deploy dups on a live system.
+
+### Prerequisites
+Required system packages:
 ```
-# Package-names may varry on your system
-
-# Based on Archlinux
-rsync
 dbus
-python-gobject
-python-dbus
-python-paramiko
-python-ruamel-yaml
-
-# Based on Ubuntu bionic
 rsync
-dbus
-python3-gi
-libdbus-1-dev
-libglib2.0-dev
-python3-dbus
-python3-paramiko
-python3-ruamel.yaml
 ```
 
-### Python dependencies
+Required python packages:
 ```
 # Runtime
 dbus-python
 paramiko
+pygobject
 ruamel.yaml>=0.15.0
 
 # Unittests
 ddt
 ```
 
-
-## Installation
-### archlinux
-There's a package in the aur: [python-dups-git](https://aur.archlinux.org/packages/python-dups-git/)
-
-### Other
+### Installing
+After all [prerequisites](#prerequisites) have been met, dups can be installed
+with:
 ```sh
-$ git clone https://github.com/linuxwhatelse/dups && cd dups
-$ pip install .
-$ cp data/systemd/dups.service ~/.config/systemd/user/
+$ git clone https://github.com/linuxwhatelse/dups
+$ cd dups
+$ python setup.py install
 ```
 
-
-## Configuration
-`dups` reads its configuration from `~/.config/dups/config.yaml` (create it if
-it doesn't exist).  
-It than combines it with some [default values](dups/data/config.yaml).  
+System files for dbus, systemd etc. can be included by setting
+`INCLUDE_DATA_FILES` prior to running the installation.  
+This will require root access to copy the files to their respective location
+and is therefore ill-advised for live systems.  
+For live systems, see [deployment](#deployment) instead.
+```sh
+$ export INCLUDE_DATA_FILES="systemd dbus desktop"
+$ python setup.py install
+```
+For possible values see `get_data_files` in [setup.py](setup.py).  
   
-`dups` will also read your [ssh config file](https://www.ssh.com/ssh/config/)
-(unless configured differently) which allows further configuration of the
-target.
+Build files/scripts for some distributions can be found in
+[data/pkg/](data/pkg/).
 
-A basic config would look something like this:
-```yaml
-# ~/.config/dups/config.yaml
-target:
-  path: '/absolute/path/to/remote/backup/directory'
-  host: 'backup-server-hostname'
-```
-
-## Usage
-`dups`'s help text is your friend :)
-```sh
-dups --help
-```
-
-### Including / Excluding items
-To add files, folders or patterns to the list of includes/excludes you can:
-```sh
-# Include some directories
-$ dups --include ~/.config ~/.local/share
-
-# Include some files
-$ dups --include ~/.gitconfig ~/.bash_profile
-
-# Include all files/folders ending with "rc" (e.g. .vimrc, .bashrc)
-$ dups --include "$HOME/*rc"
-
-# Exclude some directories
-$ dups --exclude ~/.local/share/Trash ~/.local/share/tracker
-
-# Exclude based on a pattern (note the quotes)
-$ dups --exclude '*.zip' '*.iso' '*mp3' '*.txt'
-```
-
-### Listing includes / excludes
-```sh
-# List all included items
-$ dups --list-includes
-
-# List all excluded items
-$ dups --list-excludes
-```
-
-### Remove includes / excludes
-```sh
-# Remove a file from the include list
-$ dups --remove-includes ~/.bash_profile
-
-# Remove a pattern from the exclude list
-$ dups --remove-excludes '*.txt'
-```
-
-### Start a backup
-```sh
-$ dups --backup
-```
+### Usage
+For a full setup guide and usage examples see the
+[wiki](https://github.com/linuxwhatelse/dups/wiki).
 
 
-### Delete a backup
-```sh
-# Remove a specific backup
-$ dups --remove <backup name>
+## Deployment
+Packages for some distributions are automatically built and are available in
+the [release](https://github.com/linuxwhatelse/dups/releases) section.
+  
+Additionally, the following distributions have a version accessible through
+their package-manager.
 
-# Remove all old backups but keep 14 generations
-$ dups --remove-but-keep 14
-
-# Remove all backups older than 14 days
-# See dups --help for possible values
-$ dups --remove-older-than 14d
-```
-
-### Start a restore
-```sh
-# Restore the entire most recent backup to its original location
-$ dups --restore
-
-# Restore a file from a specific backup to a specific location
-$ dups --restore <backup-name> --items $HOME/.vimrc --target /tmp/
-```
-
-### In the background
-Backup and restore tasks can be run in the background if a daemon instance is
-running.
-
-A daemon can be started manually (this call is blocking)...
-```sh
-$ dups --daemon
-```
-
-...or via the included [systemd service](/data/systemd/dups.service).
-```sh
-$ systemctl --user start dups.service
-```
-If this service is not available to you (most likely because it hasn't been
-packaged for your distribution) you can simply copy it to
-`~/.config/systemd/user/dups.service`.
-
-After reloading the user-units, you should be able to start it:
-```sh
-$ systemctl --user daemon-reload
-$ systemctl --user start dups.service
-```
-
-Now you can instruct the daemon to run your backup:
-```sh
-$ dups --backup --background
-```
+| Distribution | Link |
+| --- | --- |
+| archlinux | [aur - python-dups-git](https://aur.archlinux.org/packages/python-dups-git/) |
 
 
-## Gotchas / FAQ
-### User/Group for files and folders are not properly backed up.
-On unix systems it is typical that **only** root is able to change a
-folders/files user and group.  
-To keep the user and group, you'd have to connect with **root** to the remote
-system.  
+## Contributing
+A contribution guide does not yet exists.  
+  
+Just ensure the code quality is up to par (or better) with the existing one
+and unit-test don't fail.  
+New features should also be properly unittested.
 
-On my server I use [this docker image](https://hub.docker.com/r/kyleondy/rsync/)
-to receive backups.
 
-### How do I automate backups?
-Currently using cron.  
-I suggest using `anacron` (Ubuntu, Debian...) or `cronie` (archlinux) so if
-your PC was turned off or suspended, tasks will still be run afterwards.
+## Authors
+* **tadly** - *Initial work* - [tadly](https://github.com/tadly)
 
-A cron entry could look something like:
-```sh
-# This starts a backup at 20:00 and does:
-#   1. Wait up to 5 minutes for a valid network connection
-#   2. Remove all but keep 13 backups
-#   3. Start a new backup in the background
-0 20 * * * nm-online -q -t 300; dups --remove-but-keep 13; dups --background --backup
-```
+
+## License
+This project is licensed under the GNU General Public License v3.0 - see the
+[LICENSE](LICENSE) file for details
