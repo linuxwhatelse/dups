@@ -44,10 +44,6 @@ class User(object):
         return os.path.join(self.config_dir, 'config.yaml')
 
     @property
-    def env_file(self):
-        return os.path.join(self.config_dir, 'env.json')
-
-    @property
     def cache_dir(self):
         return os.path.join(self.home, '.cache', 'dups')
 
