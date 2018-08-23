@@ -264,6 +264,9 @@ def restore_backup(usr, items=None, name=None, target=None, dry_run=False,
             if target:
                 target = os.path.abspath(target)
 
+            if items:
+                items = [os.path.abspath(i) for i in items]
+
             utils.add_logging_handler('restore.log', usr)
 
             status = bak.restore(target, items, dry_run)
