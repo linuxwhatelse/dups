@@ -37,11 +37,11 @@ def parse_args():
         'the most recent backup is used. '
         'Use "-l|--list" to get a list of available backups.')
     restore_group.add_argument(
-        '--items', nargs='+', type=str,
+        '-I', '--items', nargs='+', type=str,
         help='Restore the given files/folders. If omitted, the entire backup '
         'will be restored.')
     restore_group.add_argument(
-        '--target', type=str, default=const.DEFAULT_RESTORE_PATH,
+        '-T', '--target', type=str, default=const.DEFAULT_RESTORE_PATH,
         help='Where to restore to. If omitted or set to "/", '
         'all files will be restored to their original location.')
 
