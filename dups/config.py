@@ -47,8 +47,9 @@ class Config:
         """Reload the config data from file."""
         with Config.__lock:
             self._user = {}
-            with open(self._config_file, 'r') as f:
-                self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
+            if self._config_file:
+                with open(self._config_file, 'r') as f:
+                    self._user = ruamel.yaml.YAML(typ='safe').load(f.read())
 
             self._combined = utils.dict_merge(self._template, self._user)
 
