@@ -99,8 +99,10 @@ class Config:
             else:
                 type_ = 'patterns'
 
-            self._user[key].setdefault(type_, []).append(val)
-            self._user[key][type_].sort()
+            self._user[key].setdefault(type_, [])
+            if val not in self._user[key][type_]:
+                self._user[key][type_].append(val)
+                self._user[key][type_].sort()
 
         self._combined = utils.dict_merge(self._template, self._user)
 
