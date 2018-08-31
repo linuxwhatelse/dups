@@ -197,7 +197,11 @@ def handle_remove(args):
     Args:
         args: (argparse.Namespace): The parsed commandline arguments.
     """
-    # TODO: Ask confirmation before deleting
+    if args.remove or args.all_but_keep or args.older_than:
+        msg = 'Remove backup(s)? This can NOT be undone!'
+        if not args.yes and not utils.confirm(msg):
+            return
+
     if args.remove:
         handle(helper.remove_backups, args.remove, args.dry_run)
 
