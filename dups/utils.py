@@ -13,7 +13,7 @@ from typing import TypeVar
 import paramiko
 from gi.repository import Gio
 
-from . import config, user
+from . import config
 
 _IO = TypeVar('_IO', bound='IO')
 
@@ -23,6 +23,31 @@ class NPriority:
     LOW = Gio.NotificationPriority.LOW
     HIGH = Gio.NotificationPriority.HIGH
     URGENT = Gio.NotificationPriority.URGENT
+
+
+def confirm(msg, default_yes=False):
+    """Let the user confirm a action with y (yes) or n (no).
+
+    Args:
+        msg (str): The message to display.
+        default_yes (bool): If yes should be the default anwer when pressing
+            return without supplying an answer.
+
+    Returns:
+        bool: `True` if confirmed, `False` otherwise.
+    """
+    msg = '{} {}: '.format(msg, '[Y/n]' if default_yes else '[y/N]')
+
+    resp = ''
+    while resp not in ['y', 'n']:
+        try:
+            resp = input(msg).lower()
+            if not resp:
+                resp = 'y' if default_yes else 'n'
+        except KeyboardInterrupt:
+            return False
+
+    return resp == 'y'
 
 
 def add_logging_handler(file_name, usr):
