@@ -74,7 +74,7 @@ def parse_args():
                 help='Perform the given task on the system daemon.')
 
         sp.add_argument('--dry-run', action='store_true', default=False,
-                        help='Perform a trial run with no changes made. ')
+                        help='Perform a trial run with no changes made.')
 
     global_group.add_argument(
         '-u', '--user', nargs='?', type=str, default=getpass.getuser(),
@@ -82,6 +82,9 @@ def parse_args():
         'root.')
     global_group.add_argument('-c', '--config', nargs='?', type=str,
                               help='Use this config file instead.')
+    global_group.add_argument('-y', '--yes', action='store_true',
+                              default=False,
+                              help='Do not ask for confirmation.')
 
     inc_ex_group.add_argument(
         '-i', '--include', nargs='+', type=str,
@@ -174,7 +177,7 @@ def handle_restore(args, usr):
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
     msg = 'Restore backup? This will overwrite all existing files!'
-    if not utils.confirm(msg):
+    if not args.yes and not utils.confirm(msg):
         return
 
     name = args.restore
