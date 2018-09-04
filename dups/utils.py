@@ -69,6 +69,7 @@ def add_logging_handler(file_name, usr):
     if do_rollover:
         handler.doRollover()
 
+    os.chown(usr.cache_dir, usr.uid, usr.gid)
     os.chown(logfile, usr.uid, usr.gid)
 
     for name, level in cfg.logging.items():
