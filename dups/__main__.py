@@ -41,6 +41,11 @@ def parse_args():
         default='latest', help='Name of the backup to restore from.'
         'If omitted or set to "latest", the most recent backup is used.')
     restore_parser.add_argument(
+        '-n', '--nth', metavar='NTH', dest='restore_nth', nargs='?', type=int,
+        help='Restore from the nth backup in reverse order. '
+        '"0" would resolve to the most recent backup, "1" to the one before '
+        'that and so on.')
+    restore_parser.add_argument(
         'target', nargs='?', type=str, default=const.DEFAULT_RESTORE_PATH,
         help='Where to restore to. If omitted or set to "/", '
         'all files will be restored to their original location.')
@@ -176,13 +181,24 @@ def handle_restore(args, usr):
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
-    msg = 'Restore backup? This will overwrite all existing files!'
-    if not args.yes and not utils.confirm(msg):
-        return
-
     name = args.restore
+
     if args.restore == 'latest':
         name = None
+
+    if args.restore_nth > -1:
+        backups = sorted(
+            helper.get_backups(include_invalid=False), reverse=True)
+
+        if args.restore_nth > len(backups):
+            print('You do not have {} backups yet.'.format(args.restore_nth))
+            sys.exit(1)
+
+        name = backups[args.restore_nth].name
+
+    msg = 'Restore backup? This will overwrite all existing files!'
+    if not args.yes and not utils.confirm(msg):
+        sys.exit(1)
 
     bak, status = handle(helper.restore_backup, usr, args.items, name,
                          args.target, args.dry_run, dbus_client)
