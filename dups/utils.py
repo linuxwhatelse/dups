@@ -11,18 +11,19 @@ from copy import deepcopy
 from typing import TypeVar
 
 import paramiko
-from gi.repository import Gio
 
 from . import config
+
+try:
+    from gi.repository import Gio
+except ImportError:
+    Gio = None
 
 _IO = TypeVar('_IO', bound='IO')
 
 
 class NPriority:
-    NORMAL = Gio.NotificationPriority.NORMAL
-    LOW = Gio.NotificationPriority.LOW
-    HIGH = Gio.NotificationPriority.HIGH
-    URGENT = Gio.NotificationPriority.URGENT
+    NORMAL, LOW, HIGH, URGENT = 0, 1, 2, 3
 
 
 def confirm(msg, default_yes=False):
@@ -86,7 +87,13 @@ def notify(app_id, title, body=None, priority=None, icon=None):
         body (str): The notifications body.
         priority (NPriority): The notifications priority level.
         icon (str): Name or path of the notifications icon.
+
+    Raises:
+        RuntimeError: If pygobject is missing.
     """
+    if Gio is None:
+        raise RuntimeError('"pygobject" required but not available.')
+
     app = Gio.Application.new(app_id, Gio.ApplicationFlags.FLAGS_NONE)
     app.register()
 

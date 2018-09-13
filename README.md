@@ -28,17 +28,18 @@ See [deployment](#deployment) for notes on how to deploy dups on a live system.
 ### Prerequisites
 Required system packages:
 ```
-dbus
 rsync
 ```
 
 Required python packages:
 ```
 # Runtime
-dbus-python
 paramiko
-pygobject
 ruamel.yaml>=0.15.0
+
+# Runtime (Optional)
+dbus-python  # Daemon support
+pygobject  # Desktop notification support
 
 # Unittests
 ddt

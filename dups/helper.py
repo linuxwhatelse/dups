@@ -6,11 +6,18 @@ import traceback
 from contextlib import contextmanager
 from typing import Tuple
 
-import dbus
 import paramiko
 import ruamel.yaml
 
 from . import backup, config, const, exceptions, rsync, user, utils
+
+try:
+    from dbus.exceptions import DBusException
+except ImportError:
+
+    class DBusException(Exception):
+        pass
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -133,7 +140,7 @@ def error_handler(callback, *args, **kwargs):
     except (KeyError, socket.gaierror):
         error_msg = 'Could not connect to host.'
 
-    except dbus.exceptions.DBusException:
+    except DBusException:
         LOGGER.debug(traceback.format_exc())
         error_msg = 'Unable to connect to daemon. Is one running?'
 
@@ -167,7 +174,10 @@ def notify(title, body=None, priority=None, icon=const.APP_ICON):
     if not cfg.notify:
         return
 
-    utils.notify(const.APP_ID, title, body, priority, icon)
+    try:
+        utils.notify(const.APP_ID, title, body, priority, icon)
+    except RuntimeError as e:
+        LOGGER.warning(str(e))
 
 
 def get_backups(include_valid=True, include_invalid=True):

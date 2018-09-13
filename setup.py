@@ -2,22 +2,6 @@ import os
 
 from setuptools import find_packages, setup
 
-HERE = os.path.dirname(os.path.realpath(__file__))
-
-
-def get_requirements():
-    requirements = []
-    with open(os.path.join(HERE, 'requirements.txt'), 'r') as f:
-        for line in f.readlines():
-            line = line.strip()
-            if not line or line.startswith('#'):
-                if line.lstrip('#').strip().lower().startswith('unittests'):
-                    break
-                continue
-            requirements.append(line)
-
-    return requirements
-
 
 def get_data_files():
     include_data_files = os.environ.get('INCLUDE_DATA_FILES', '').split(' ')
@@ -67,6 +51,10 @@ setup(
     ]},
     data_files=get_data_files(),
     scripts=['data/bin/dups'],
-    install_requires=get_requirements(),
+    install_requires=['paramiko', 'ruamel.yaml>=0.15.0'],
+    extras_require={
+        'daemon': ['dbus-python'],
+        'notification': ['pygobject']
+    },
     zip_safe=False,
 )

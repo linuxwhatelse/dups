@@ -3,9 +3,14 @@ import getpass
 import logging
 import sys
 
-import dbus
+from . import const, helper, user, utils
 
-from . import const, daemon, helper, user, utils
+try:
+    import dbus
+    from . import daemon
+except ImportError:
+    dbus = None
+    daemon = None
 
 LOGGER = logging.getLogger(__name__)
 
@@ -275,9 +280,27 @@ def handle_management(args, cfg):
         cfg.remove_excludes(args.remove_excludes)
 
 
+def is_dbus_required(args):
+    if any((args.daemon, args.system_daemon)):
+        return True
+
+    if 'background' in args and args.background:
+        return True
+
+    if 'system_background' in args and args.system_background:
+        return True
+
+    return False
+
+
 def main():
     """Entrypoint for dups."""
     args = parse_args()
+
+    if is_dbus_required(args) and dbus is None:
+        print('To use any of the daemon functionality, "dbus-python" '
+              'is required.')
+        sys.exit(1)
 
     try:
         usr = user.User(args.user)
