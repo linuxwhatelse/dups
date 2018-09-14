@@ -191,7 +191,7 @@ def handle_restore(args, usr):
     if args.restore == 'latest':
         name = None
 
-    if args.restore_nth > -1:
+    if args.restore_nth:
         backups = sorted(
             helper.get_backups(include_invalid=False), reverse=True)
 
