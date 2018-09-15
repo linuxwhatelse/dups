@@ -83,6 +83,9 @@ def parse_args():
                 action='store_true', default=False,
                 help='Perform the given task on the system daemon.')
 
+            sp.add_argument('--log', action='store_true', default=False,
+                            help='Print the most recent log.')
+
         sp.add_argument('--dry-run', action='store_true', default=False,
                         help='Perform a trial run with no changes made.')
 
@@ -160,6 +163,10 @@ def handle_backup(args, usr):
         args: (argparse.Namespace): The parsed commandline arguments.
         usr: (user.User): The user for which to perform this action.
     """
+    if args.log:
+        helper.print_log(usr, backup=True)
+        return
+
     if args.list:
         handle(helper.print_backups)
         return
@@ -182,6 +189,10 @@ def handle_restore(args, usr):
         args: (argparse.Namespace): The parsed commandline arguments.
         usr: (user.User): The user for which to perform this action.
     """
+    if args.log:
+        helper.print_log(usr, restore=True)
+        return
+
     dbus_client = None
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)

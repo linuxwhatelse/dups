@@ -180,6 +180,29 @@ def notify(title, body=None, priority=None, icon=const.APP_ICON):
         LOGGER.warning(str(e))
 
 
+def print_log(usr, backup=False, restore=False):
+    """Print the most recent log file if it exists.
+
+    Args:
+        usr (user.User): The user from which to read the logs.
+        backup (bool): If the backup log should be printed.
+        restore (bool): If the restore log should be printed.
+    """
+    files = []
+    if backup:
+        files.append(os.path.join(usr.cache_dir, 'backup.log'))
+
+    if restore:
+        files.append(os.path.join(usr.cache_dir, 'restore.log'))
+
+    for f in files:
+        if not os.path.exists(f):
+            continue
+
+        with open(f, 'r') as f:
+            print(f.read())
+
+
 def get_backups(include_valid=True, include_invalid=True):
     """Get a sorted list of all available backups.
 
