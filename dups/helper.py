@@ -374,3 +374,16 @@ def remove_older_than(duration, dry_run=False):
             b.name for b in get_backups(io) if b.datetime <= older_than)
 
     remove_backups(names, dry_run)
+
+
+def remove_invalid(dry_run=False):
+    """Remove all invalid backups.
+
+    Args:
+        dry_run (bool): Whether or not to perform a trial run with no
+            changes made.
+    """
+    with configured_io() as io:
+        names = list(b.name for b in get_backups(io) if not b.is_valid)
+
+    remove_backups(names, dry_run)

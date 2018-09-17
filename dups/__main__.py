@@ -70,6 +70,8 @@ def parse_args():
         'combination of a "amount" and a "identifier". The identifier '
         'can be one of "s" Seconds, "m" Minutes, "h" Hours, "d" Days or '
         '"w" Weeks. e.g "1w" would refer to "1 week".')
+    remove_parser.add_argument('--invalid', action='store_true', default=False,
+                               help='Remove all invalid backups.')
 
     for sp in [backup_parser, restore_parser, remove_parser]:
         if sp != remove_parser:
@@ -230,7 +232,7 @@ def handle_remove(args):
     Args:
         args: (argparse.Namespace): The parsed commandline arguments.
     """
-    if args.remove or args.all_but_keep or args.older_than:
+    if args.remove or args.all_but_keep or args.older_than or args.invalid:
         msg = 'Remove backup(s)? This can NOT be undone!'
         if not args.yes and not utils.confirm(msg):
             return
@@ -243,6 +245,9 @@ def handle_remove(args):
 
     elif args.older_than:
         handle(helper.remove_older_than, args.older_than, args.dry_run)
+
+    elif args.invalid:
+        handle(helper.remove_invalid, args.dry_run)
 
 
 def handle_daemon(usr, system=False):
