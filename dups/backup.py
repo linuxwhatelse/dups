@@ -1,12 +1,17 @@
 import datetime
+import json
 import logging
 import os
-from typing import List, TypeVar
+from typing import List
 
 from . import exceptions, rsync, utils
 
 LOGGER = logging.getLogger(__name__)
-_Backup = TypeVar('_Backup', bound='Backup')
+
+
+class Backup(object):
+    # Forward declaration for autocompletion to work with singletons
+    pass
 
 
 class Backup(object):
@@ -41,7 +46,7 @@ class Backup(object):
         self._name = name
 
     @classmethod
-    def new(cls, io: utils.IO, root_dir) -> _Backup:
+    def new(cls, io: utils.IO, root_dir) -> Backup:
         """Create a new backup instance.
 
         Args:
@@ -56,7 +61,7 @@ class Backup(object):
         return cls(io, root_dir, name)
 
     @classmethod
-    def from_name(cls, io: utils.IO, name, root_dir) -> _Backup:
+    def from_name(cls, io: utils.IO, name, root_dir) -> Backup:
         """Get an existing backup via its name.
 
         Args:
@@ -76,7 +81,7 @@ class Backup(object):
 
     @classmethod
     def all_backups(cls, io: utils.IO, root_dir, include_valid=True,
-                    include_invalid=False) -> List[_Backup]:
+                    include_invalid=False) -> List[Backup]:
         """Get a list of all existing backups.
 
         Args:
@@ -119,7 +124,7 @@ class Backup(object):
 
     @classmethod
     def latest(cls, io: utils.IO, root_dir, include_valid=True,
-               include_invalid=False) -> _Backup:
+               include_invalid=False) -> Backup:
         """Get the most recent backup.
 
         Args:
@@ -214,6 +219,11 @@ class Backup(object):
         return os.path.join(self.backup_dir, '.valid')
 
     @property
+    def info_path(self):
+        """str: Path to the backups '.info' file."""
+        return os.path.join(self.backup_dir, '.info')
+
+    @property
     def exists(self):
         """bool: Whether or not this backup exists."""
         return self._io.exists(self.backup_dir)
@@ -222,6 +232,30 @@ class Backup(object):
     def is_valid(self):
         """bool: Whether or not this is valid."""
         return self._io.exists(self.valid_path)
+
+    @property
+    def info(self):
+        """dict: Data stored in the backups '.info' file."""
+        if self._io.exists(self.info_path):
+            with self._io.open(self.info_path, 'r') as f:
+                try:
+                    return json.loads(f.read())
+                except Exception:
+                    pass
+        return {}
+
+    def set_info(self, key, value):
+        """Set a info attribute for this backup.
+
+        Args:
+            key: The key to set/overwrite.
+            value: The value to set.
+        """
+        info = self.info
+        info[key] = value
+
+        with self._io.open(self.info_path, 'w') as f:
+            f.write(json.dumps(info, indent=2))
 
     def set_valid(self, valid):
         """Change the backups valid state.
@@ -234,6 +268,20 @@ class Backup(object):
         else:
             if self._io.exists(self.valid_path):
                 self._io.remove(self.valid_path)
+
+    def calculate_size(self):
+        """Recalculate the size for this backup.
+
+        Returns:
+            int: The backups size in bytes.
+        """
+        size = 0
+        if self._io.exists(self.backup_data_dir):
+            size = self._io.calculate_size(self.backup_data_dir)
+
+        self.set_info('bytes', size)
+
+        return size
 
     def backup(self, items, excludes=None, dry_run=False) -> rsync.Status:
         """Create this backup if it doesn't already exist.
@@ -271,6 +319,9 @@ class Backup(object):
 
         target = rsync.Path(self.backup_data_dir, self._io.host)
         status = sync.sync(target, items, excludes, link_dest)
+
+        if not dry_run and self.info.get('size', None) is None:
+            self.calculate_size()
 
         if not dry_run and status.is_complete:
             self.set_valid(True)

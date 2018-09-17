@@ -203,8 +203,9 @@ def handle_restore(args, usr):
         name = None
 
     if args.restore_nth:
-        backups = sorted(
-            helper.get_backups(include_invalid=False), reverse=True)
+        with helper.configured_io() as io:
+            backups = sorted(
+                helper.get_backups(io, include_invalid=False), reverse=True)
 
         if args.restore_nth > len(backups):
             print('You do not have {} backups yet.'.format(args.restore_nth))

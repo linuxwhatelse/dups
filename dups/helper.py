@@ -5,7 +5,6 @@ import socket
 import traceback
 from contextlib import contextmanager
 from typing import Tuple
-
 import paramiko
 import ruamel.yaml
 
@@ -203,7 +202,7 @@ def print_log(usr, backup=False, restore=False):
             print(f.read())
 
 
-def get_backups(include_valid=True, include_invalid=True):
+def get_backups(io, include_valid=True, include_invalid=True):
     """Get a sorted list of all available backups.
 
     Returns:
@@ -212,21 +211,28 @@ def get_backups(include_valid=True, include_invalid=True):
     """
     cfg = config.Config.get()
 
-    with configured_io() as io:
-        backups = sorted(
-            backup.Backup.all_backups(io, cfg.target['path'], include_valid,
-                                      include_invalid))
-        return backups
+    backups = sorted(
+        backup.Backup.all_backups(io, cfg.target['path'], include_valid,
+                                  include_invalid))
+
+    return backups
 
 
 def print_backups():
     """Print a list of all available backups in a pretty way."""
-    backups = get_backups()
+    with configured_io() as io:
+        backups = get_backups(io)
 
-    print('Name', '\t\t', 'Date', '\t\t\t', 'Valid')
-    for b in backups:
-        valid = 'yes' if b.is_valid else 'no'
-        print(b.name, '\t', b.name_pretty, '\t', valid)
+        print('Name', '\t\t', 'Date', '\t\t\t', 'Valid', '\t', 'Size')
+        for b in backups:
+            valid = 'yes' if b.is_valid else 'no'
+
+            size = b.info.get('bytes', None)
+            if size is None:
+                size = b.calculate_size()
+            size = utils.bytes2human(size)
+
+            print(b.name, '\t', b.name_pretty, '\t', valid, '\t', size)
 
 
 def create_backup(usr, dry_run=False,
@@ -338,10 +344,11 @@ def remove_but_keep(keep, dry_run=False):
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
     """
-    if keep == 0:
-        names = list(b.name for b in get_backups())
-    else:
-        names = list(b.name for b in get_backups()[:-keep])
+    with configured_io() as io:
+        if keep == 0:
+            names = list(b.name for b in get_backups(io))
+        else:
+            names = list(b.name for b in get_backups(io)[:-keep])
 
     remove_backups(names, dry_run)
 
@@ -362,10 +369,8 @@ def remove_older_than(duration, dry_run=False):
         print('Invalid duration specified.')
         return
 
-    names = []
-    for b in get_backups():
-        if b.datetime > older_than:
-            break
-        names.append(b.name)
+    with configured_io() as io:
+        names = list(
+            b.name for b in get_backups(io) if b.datetime <= older_than)
 
     remove_backups(names, dry_run)

@@ -147,6 +147,17 @@ class Test_IO(unittest.TestCase):
 
         io.close()
 
+    @data('local', 'remote')
+    def test_open(self, target):
+        io = self.get_io(target)
+
+        msg = 'Hello dups!'
+        with io.open(context.TMP_FILE, 'w') as f:
+            f.write(msg)
+
+        with open(context.TMP_FILE) as f:
+            self.assertEquals(msg, f.read())
+
 
 if __name__ == '__main__':
     unittest.main(exit=False)

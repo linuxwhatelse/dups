@@ -7,8 +7,9 @@ import logging.handlers
 import os
 import shutil
 import stat
+import subprocess
+from contextlib import contextmanager
 from copy import deepcopy
-from typing import TypeVar
 
 import paramiko
 
@@ -18,8 +19,6 @@ try:
     from gi.repository import Gio
 except ImportError:
     Gio = None
-
-_IO = TypeVar('_IO', bound='IO')
 
 
 class NPriority:
@@ -167,18 +166,49 @@ def duration_to_timedelta(duration):
 
 
 def validate_absolute(func):
-    """Decorator which validates each argument if it's a absolute path."""
+    """Decorator which checks if the first argument is a absolute path."""
 
     @functools.wraps(func)
     def wrapper(*args):
         for arg in args:
             if not isinstance(arg, str):
                 continue
+
             if not os.path.isabs(arg):
                 raise ValueError('Should be an absolute path!')
+
+            break
         return func(*args)
 
     return wrapper
+
+
+def bytes2human(n):
+    """Convert the given bytes to a human readable representation.
+
+    Args:
+        n (int): bytes to convert.
+
+    Returns:
+        str: Human readable representation of the given bytes.
+    """
+    symbols = ('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
+
+    prefix = {}
+    for i, s in enumerate(symbols[1:]):
+        prefix[s] = 1 << (i + 1) * 10
+
+    for symbol in reversed(symbols[1:]):
+        if n >= prefix[symbol]:
+            value = float(n) / prefix[symbol]
+            return '{:.2f} {}'.format(value, symbol)
+
+    return '{:.2f} {}'.format(n, symbols[0])
+
+
+class IO:
+    # Forward declaration for autocompletion to work with singletons
+    pass
 
 
 class IO:
@@ -214,7 +244,7 @@ class IO:
         self.__del__()
 
     @classmethod
-    def get(cls, host=None, config_file=None) -> _IO:
+    def get(cls, host=None, config_file=None) -> IO:
         """Get a instance of `IO`_ for the given arguments.
 
         Args:
@@ -390,6 +420,32 @@ class IO:
             return open(path, 'a').close()
         return self._sftp.open(path, 'a').close()
 
+    @contextmanager
+    @validate_absolute
+    def open(self, path, mode='r'):
+        """Open the given path for reading/writing.
+
+        Yields:
+            file: A file type object
+
+        Example:
+            >>> with IO.get().open('/tmp/test.file', 'w') as f:
+                    f.write('Hello world!')
+        """
+        file_ = None
+        try:
+            if self.is_local:
+                file_ = open(path, mode)
+            else:
+                file_ = self._sftp.file(path, mode)
+
+            yield file_
+
+        finally:
+            if file_:
+                file_.flush()
+                file_.close()
+
     @validate_absolute
     def exists(self, path):
         """Test whether the given path exists.
@@ -461,3 +517,25 @@ class IO:
 
         # Block until execution finished
         res[1].channel.recv_exit_status()
+
+    @validate_absolute
+    def calculate_size(self, path):
+        """Calculate the size of the given path.
+
+        Args:
+            path (str): Directory or file path for which to calculate the size.
+
+        Returns:
+            int: The size of the directory in bytes.
+
+        Raises:
+            ValueError: If the given path is not absolute.
+            OSError: If the directory is not empty.
+        """
+        if self.is_local:
+            res = subprocess.check_output(['du', '-s', path])
+        else:
+            res = self._ssh.exec_command('du -s \'{}\''.format(path))
+            res = res[1].read()
+
+        return int(res.decode().split('\t')[0]) * 1024
