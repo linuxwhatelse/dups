@@ -7,13 +7,12 @@ fi
 
 PYTHON="$1"
 
-cp -r /dups /tmp/dups
-cd /tmp/dups
-
+cp -r /dups /home/dups/source
+chown -R dups:dups /home/dups/source
 
 # SSH server is required for remote tests
 /usr/sbin/sshd
 
 # Run all unittests
-${PYTHON} -m unittest discover -v -s tests
-
+cd /home/dups/source
+su dups -c "${PYTHON} -m unittest discover -v -s tests"

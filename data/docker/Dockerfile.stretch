@@ -18,8 +18,13 @@ RUN apt-get install --no-install-recommends -y \
 RUN apt-get install --no-install-recommends -y \
     python3-dbus python3-paramiko python3-ruamel.yaml
 
-COPY tests/.ssh /root/.ssh
-RUN chmod -R 700 /root/.ssh
+# add a normal user used for testing
+RUN useradd --create-home dups
+
+# prepare ssh environment
+COPY tests/.ssh /home/dups/.ssh
+RUN chown -R dups:dups /home/dups/.ssh
+RUN chmod -R 700 /home/dups/.ssh
 
 RUN mkdir /var/run/sshd
 RUN /usr/bin/ssh-keygen -A

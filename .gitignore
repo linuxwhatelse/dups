@@ -2,6 +2,7 @@
 /.venv
 /tmp
 /wiki
+/builds
 
 # setuptools build files
 /dist
