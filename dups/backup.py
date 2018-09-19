@@ -229,11 +229,6 @@ class Backup(object):
         return self._io.exists(self.backup_dir)
 
     @property
-    def is_valid(self):
-        """bool: Whether or not this is valid."""
-        return self._io.exists(self.valid_path)
-
-    @property
     def info(self):
         """dict: Data stored in the backups '.info' file."""
         if self._io.exists(self.info_path):
@@ -257,17 +252,18 @@ class Backup(object):
         with self._io.open(self.info_path, 'w') as f:
             f.write(json.dumps(info, indent=2))
 
+    @property
+    def is_valid(self):
+        """bool: Whether or not this is valid."""
+        return self.info.get('valid', False)
+
     def set_valid(self, valid):
         """Change the backups valid state.
 
         Args:
             valid (bool): `True` to set the backup valid, `False` otherwise.
         """
-        if valid:
-            self._io.touch(self.valid_path)
-        else:
-            if self._io.exists(self.valid_path):
-                self._io.remove(self.valid_path)
+        self.set_info('valid', valid)
 
     def calculate_size(self):
         """Recalculate the size for this backup.

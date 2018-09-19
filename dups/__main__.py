@@ -232,7 +232,7 @@ def handle_remove(args):
     Args:
         args: (argparse.Namespace): The parsed commandline arguments.
     """
-    if args.remove or args.all_but_keep or args.older_than or args.invalid:
+    if any((args.remove, args.all_but_keep, args.older_than, args.invalid)):
         msg = 'Remove backup(s)? This can NOT be undone!'
         if not args.yes and not utils.confirm(msg):
             return
