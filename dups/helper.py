@@ -218,10 +218,10 @@ def get_backups(io, include_valid=True, include_invalid=True):
     return backups
 
 
-def print_backups():
+def print_backups(include_valid=True, include_invalid=True):
     """Print a list of all available backups in a pretty way."""
     with configured_io() as io:
-        backups = get_backups(io)
+        backups = get_backups(io, include_valid, include_invalid)
 
         print('Name', '\t\t', 'Date', '\t\t\t', 'Valid', '\t', 'Size')
         for b in backups:
@@ -310,6 +310,28 @@ def restore_backup(usr, items=None, name=None, target=None, dry_run=False,
 
             status = bak.restore(target, items, dry_run)
             return bak, status
+
+
+def validate_backups(names, is_valid):
+    """Change the given backups valid state based on the users configuration.
+
+    Args:z
+        names (list): List of Names of backups to remove.
+        is_valid (bool): If the given backups should be set valid or invalid.
+    """
+    cfg = config.Config.get()
+
+    with configured_io() as io:
+        for name in names:
+            try:
+                b = backup.Backup.from_name(io, name, cfg.target['path'])
+            except exceptions.BackupNotFoundException:
+                print('Backup "{}" does not exist!'.format(name))
+                continue
+
+            b.set_valid(is_valid)
+
+            print('Successfully modified "{}"'.format(name))
 
 
 def remove_backups(names, dry_run=False):

@@ -15,130 +15,182 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
-def parse_args():
-    """Parse all commandline arguments.
+def get_arg_parser():
+    """Prepares all argument parsers.
 
     Returns:
-        argparse.Namespace: The parsed commandline arguments.
+        dict: Dict containing all argument parsers.
+            `main` referse to the main argument parser.
+            All other entries refer to subparsers.
     """
-    parser = argparse.ArgumentParser(
+    parsers = {}
+    parsers['main'] = argparse.ArgumentParser(
         const.APP_NAME,
         description='It deduplicates things - Backup as simple as possible.')
 
-    global_group = parser.add_argument_group('Global')
-    inc_ex_group = parser.add_argument_group('Include/Exclude')
-    daemon_group = parser.add_argument_group('Daemon')
+    parsers['main'].add_argument(
+        '-u', '--user', nargs='?', type=str, default=getpass.getuser(),
+        help='Pretend to be this user for reading the config file, writing '
+        'logs etc. while preserving the original users access rights. '
+        'Only useful when run with elevated privileges.')
+    parsers['main'].add_argument('-c', '--config', nargs='?', type=str,
+                                 help='Use this config file instead.')
 
-    subparsers = parser.add_subparsers(dest='command')
+    subparser = parsers['main'].add_subparsers(
+        title='Commands', dest='command', metavar='<command>', required=True)
 
-    backup_parser = subparsers.add_parser('backup', aliases=['b'],
-                                          help='Start a new backup.')
-    restore_parser = subparsers.add_parser('restore', aliases=['r'],
-                                           help='Start a new restore.')
-    remove_parser = subparsers.add_parser('remove', aliases=['rm'],
-                                          help='Remove one or more backups.')
+    # List backups
+    parsers['list'] = subparser.add_parser('list', aliases=['l'],
+                                           help='List backups.')
 
-    backup_parser.add_argument('-l', '--list', action='store_true',
-                               help='List all available backups.')
+    parsers['list'].add_argument('-v', '--no-valid', action='store_true',
+                                 help='List without valid backups.')
+    parsers['list'].add_argument('-i', '--no-invalid', action='store_true',
+                                 help='List without invalid backups.')
 
-    restore_parser.add_argument(
+    # Create backups
+    parsers['backup'] = subparser.add_parser('backup', aliases=['b'],
+                                             help='Start a new backup.')
+
+    # Modify backups
+    parsers['modify'] = subparser.add_parser(
+        'modify', aliases=['m'], help='Modify the given backup(s).')
+
+    parsers['modify'].add_argument('backup', nargs='*', type=str,
+                                   help='Backup(s) to modify.')
+    parsers['modify'].add_argument('--set-valid', action='store_true',
+                                   help='Set the given backup(s) to be valid.')
+    parsers['modify'].add_argument(
+        '--set-invalid', action='store_true',
+        help='Set the given backup(s) to be invalid.')
+
+    # Restore backups
+    parsers['restore'] = subparser.add_parser('restore', aliases=['r'],
+                                              help='Start a new restore.')
+
+    parsers['restore'].add_argument(
         '-b', '--backup', metavar='BACKUP', dest='restore', type=str,
         default='latest', help='Name of the backup to restore from.'
         'If omitted or set to "latest", the most recent backup is used.')
-    restore_parser.add_argument(
+    parsers['restore'].add_argument(
         '-n', '--nth', metavar='NTH', dest='restore_nth', nargs='?', type=int,
         help='Restore from the nth backup in reverse order. '
         '"0" would resolve to the most recent backup, "1" to the one before '
         'that and so on.')
-    restore_parser.add_argument(
+    parsers['restore'].add_argument(
         'target', nargs='?', type=str, default=const.DEFAULT_RESTORE_PATH,
         help='Where to restore to. If omitted or set to "/", '
         'all files will be restored to their original location.')
-    restore_parser.add_argument(
+    parsers['restore'].add_argument(
         'items', nargs='*', type=str,
         help='Restore the given files/folders. If omitted, the entire backup '
         'will be restored.')
 
-    remove_parser.add_argument('remove', metavar='backup', nargs='*', type=str,
-                               help='Remove the given backup(s).')
-    remove_parser.add_argument(
+    # Remove backups
+    parsers['remove'] = subparser.add_parser(
+        'remove', aliases=['rm'], help='Remove one or more backups.')
+
+    parsers['remove'].add_argument('backup', nargs='*', type=str,
+                                   help='Backup(s) to remove.')
+    parsers['remove'].add_argument(
         '--all-but-keep', nargs='?', type=int,
         help='Remove all but keep this many of most recent backups.')
-    remove_parser.add_argument(
+    parsers['remove'].add_argument(
         '--older-than', nargs='?', type=str,
-        help='Remove all backups older than this where "this" referes to a '
+        help='Remove all backups older than this where "this" referse to a '
         'combination of a "amount" and a "identifier". The identifier '
         'can be one of "s" Seconds, "m" Minutes, "h" Hours, "d" Days or '
         '"w" Weeks. e.g "1w" would refer to "1 week".')
-    remove_parser.add_argument('--invalid', action='store_true', default=False,
-                               help='Remove all invalid backups.')
+    parsers['remove'].add_argument('--invalid', action='store_true',
+                                   help='Remove all invalid backups.')
 
-    for sp in [backup_parser, restore_parser, remove_parser]:
-        if sp != remove_parser:
+    # Print logs
+    parsers['logs'] = subparser.add_parser('logs',
+                                           help='Print the most recent log.')
+    parsers['logs'].add_argument('-b', '--backup', action='store_true',
+                                 help='Print the most recent backup log.')
+    parsers['logs'].add_argument('-r', '--restore', action='store_true',
+                                 help='Print the most recent restore log.')
+
+    # Backup common options
+    for sp in [parsers['backup'], parsers['restore'], parsers['remove']]:
+        if sp != parsers['remove']:
             sp.add_argument(
                 '--bg', '--background', dest='background', action='store_true',
-                default=False,
                 help='Perform the given task on the session daemon.')
 
             sp.add_argument(
                 '--sbg', '--system-background', dest='system_background',
-                action='store_true', default=False,
+                action='store_true',
                 help='Perform the given task on the system daemon.')
 
-            sp.add_argument('--log', action='store_true', default=False,
+            sp.add_argument('--log', action='store_true',
                             help='Print the most recent log.')
 
-        sp.add_argument('--dry-run', action='store_true', default=False,
+        if sp != parsers['backup']:
+            sp.add_argument('-y', '--yes', action='store_true',
+                            help='Do not ask for confirmation.')
+
+        sp.add_argument('--dry-run', action='store_true',
                         help='Perform a trial run with no changes made.')
 
-    global_group.add_argument(
-        '-u', '--user', nargs='?', type=str, default=getpass.getuser(),
-        help='Use this users configuration. Only usefull when running as '
-        'root.')
-    global_group.add_argument('-c', '--config', nargs='?', type=str,
-                              help='Use this config file instead.')
-    global_group.add_argument('-y', '--yes', action='store_true',
-                              default=False,
-                              help='Do not ask for confirmation.')
+    # Include commands
+    parsers['include'] = subparser.add_parser('include', aliases=['i'],
+                                              help='Add items to be included.')
+    parsers['include'].add_argument(
+        'items', nargs='*', type=str,
+        help='Folders, file and/or patterns to be include. When adding '
+        'patterns use single quotes to ensure they are not resolved by your '
+        'shell.')
 
-    inc_ex_group.add_argument(
-        '-i', '--include', nargs='+', type=str,
-        help='Add folders, file and/or patterns to the include list. '
-        'When adding patterns use single quotes to ensure they '
-        'are not resolved by your shell.')
-    inc_ex_group.add_argument(
-        '--li', '--list-includes', dest='list_includes', action='store_true',
-        help='List all folders, files and pattern from the include list.')
-    inc_ex_group.add_argument(
-        '--ri', '--remove-includes', dest='remove_includes', nargs='+',
-        type=str, help='Remove the given items from the include list.'
-        'When removing patterns use single quotes to ensure they '
-        'are not resolved by your shell.')
+    parsers['list-includes'] = subparser.add_parser(
+        'list-includes', aliases=['li'], help='List included items.')
 
-    inc_ex_group.add_argument(
-        '-e', '--exclude', nargs='+', type=str,
-        help='Add folders, file and/or patterns to the exlude list. '
-        'When adding patterns use single quotes to ensure they '
-        'are not resolved by your shell.')
-    inc_ex_group.add_argument(
-        '--le', '--list-excludes', dest='list_excludes', action='store_true',
-        help='List all folders, files and pattern from the exclude list.')
-    inc_ex_group.add_argument(
-        '--re', '--remove-excludes', dest='remove_excludes', nargs='+',
-        type=str, help='Remove the given items from the exclude list.'
-        'When removing patterns use single quotes to ensure they '
-        'are not resolved by your shell.')
+    parsers['remove-includes'] = subparser.add_parser(
+        'remove-includes', aliases=['rmi'], help='Remove included items.')
+    parsers['remove-includes'].add_argument(
+        'items', nargs='*', type=str,
+        help='Remove the given items from the include list. When removing '
+        'patterns use single quotes to ensure they are not resolved by your '
+        'shell.')
 
-    daemon_group.add_argument(
-        '--daemon', action='store_true',
-        help='Start a user session daemon. To properly backup/restore files '
-        'owned by root, you need a system daemon.')
-    daemon_group.add_argument(
-        '--system-daemon', action='store_true',
-        help='Start a system daemon. If desktop notifications are wanted, '
-        'a session daemon is also required.')
+    # Exclude commands
+    parsers['exclude'] = subparser.add_parser('exclude', aliases=['e'],
+                                              help='Add items to be excluded.')
+    parsers['exclude'].add_argument(
+        'items', nargs='*', type=str,
+        help='Folders, file and/or patterns to be excluded. When adding '
+        'patterns use single quotes to ensure they are not resolved by your '
+        'shell.')
 
-    return parser.parse_args()
+    parsers['list-excludes'] = subparser.add_parser(
+        'list-excludes', aliases=['le'], help='List excluded items.')
+
+    parsers['remove-excludes'] = subparser.add_parser(
+        'remove-excludes', aliases=['rme'], help='Remove excluded items.')
+    parsers['remove-excludes'].add_argument(
+        'items', nargs='*', type=str,
+        help='Remove the given items from the exclude list. When removing '
+        'patterns use single quotes to ensure they are not resolved by your '
+        'shell.')
+
+    # Include/Exclude common options
+    for sp in [parsers['list-includes'], parsers['list-excludes']]:
+        sp.add_argument('-f', '--no-files', action='store_true',
+                        help='List without files.')
+        sp.add_argument('-F', '--no-folders', action='store_true',
+                        help='List without folders.')
+        sp.add_argument('-p', '--no-patterns', action='store_true',
+                        help='List without patterns.')
+
+    parsers['daemon'] = subparser.add_parser('daemon', aliases=['d'],
+                                             help='Start a daemon instance.')
+    parsers['daemon'].add_argument('--session', action='store_true',
+                                   help='Start a user daemon.')
+    parsers['daemon'].add_argument('--system', action='store_true',
+                                   help='Start a system daemon.')
+
+    return parsers
 
 
 def handle(callback, *args, **kwargs):
@@ -147,7 +199,7 @@ def handle(callback, *args, **kwargs):
     Args:
         callback (function): The function to execute.
         *args: Arguments to pass to the callback.
-        **kargs: Keyword-Arguments to pass to the callback.
+        **kwargs: Keyword-Arguments to pass to the callback.
     """
     success, res = helper.error_handler(callback, *args, **kwargs)
 
@@ -165,14 +217,6 @@ def handle_backup(args, usr):
         args: (argparse.Namespace): The parsed commandline arguments.
         usr: (user.User): The user for which to perform this action.
     """
-    if args.log:
-        helper.print_log(usr, backup=True)
-        return
-
-    if args.list:
-        handle(helper.print_backups)
-        return
-
     dbus_client = None
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
@@ -184,6 +228,20 @@ def handle_backup(args, usr):
         sys.exit(status.exit_code)
 
 
+def handle_modify(args, usr):
+    """Handle the modify sub-command.
+
+    Args:
+        args: (argparse.Namespace): The parsed commandline arguments.
+        usr: (user.User): The user for which to perform this action.
+    """
+    if args.set_valid:
+        handle(helper.validate_backups, args.backup, True)
+
+    elif args.set_invalid:
+        handle(helper.validate_backups, args.backup, False)
+
+
 def handle_restore(args, usr):
     """Handle the restore sub-command.
 
@@ -191,10 +249,6 @@ def handle_restore(args, usr):
         args: (argparse.Namespace): The parsed commandline arguments.
         usr: (user.User): The user for which to perform this action.
     """
-    if args.log:
-        helper.print_log(usr, restore=True)
-        return
-
     dbus_client = None
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
@@ -232,13 +286,13 @@ def handle_remove(args):
     Args:
         args: (argparse.Namespace): The parsed commandline arguments.
     """
-    if any((args.remove, args.all_but_keep, args.older_than, args.invalid)):
+    if any((args.backup, args.all_but_keep, args.older_than, args.invalid)):
         msg = 'Remove backup(s)? This can NOT be undone!'
         if not args.yes and not utils.confirm(msg):
             return
 
-    if args.remove:
-        handle(helper.remove_backups, args.remove, args.dry_run)
+    if args.backup:
+        handle(helper.remove_backups, args.backup, args.dry_run)
 
     elif args.all_but_keep is not None:
         handle(helper.remove_but_keep, args.all_but_keep, args.dry_run)
@@ -251,54 +305,52 @@ def handle_remove(args):
 
 
 def handle_daemon(usr, system=False):
-    """Handle starting a daemon
+    """Handle starting a daemon and exit if necessary.
 
     Args:
         usr (user.User): User for which to start a daemon.
         system (bool): Whether or not a system (rather than a session) daemon
             should be started.
-
-    Returns:
-        int: A exit code.
     """
     try:
         daemon.Daemon.run(usr, system)
 
     except dbus.exceptions.DBusException:
         print('The system daemon requires root privileges.')
-        return 1
-
-    return 0
+        sys.exit(1)
 
 
-def handle_management(args, cfg):
-    """Handle all arguments used to manage includes/excludes.
+def print_items(items, files=True, folders=True, patterns=True):
+    """Print the given items.
 
     Args:
-        args: (argparse.Namespace): The parsed commandline arguments.
-        cfg: (config.Config): The config to add/remove includes/exludes from.
+        files (bool): If `True`, include all files.
+        folders (bool): If `True`, include all folders.
+        patters (bool): If `True`, include all patterns.
     """
-    if args.include:
-        cfg.add_includes(args.include)
+    if not files:
+        del items['files']
 
-    if args.list_includes:
-        print('\n'.join(sorted(cfg.get_includes(True))))
+    if not folders:
+        del items['folders']
 
-    if args.remove_includes:
-        cfg.remove_includes(args.remove_includes)
+    if not patterns:
+        del items['patterns']
 
-    if args.exclude:
-        cfg.add_excludes(args.exclude)
-
-    if args.list_excludes:
-        print('\n'.join(sorted(cfg.get_excludes(True))))
-
-    if args.remove_excludes:
-        cfg.remove_excludes(args.remove_excludes)
+    items = [item for elem in items.values() for item in elem]
+    print('\n'.join(sorted(items)))
 
 
 def is_dbus_required(args):
-    if any((args.daemon, args.system_daemon)):
+    """Check `dbus-python` is required.
+
+    Args:
+        args: (argparse.Namespace): The parsed commandline arguments.
+
+    Returns:
+        bool: `True` if the `dbus-python` is required, `False` otherwise.
+    """
+    if args.command in ['daemon', 'd']:
         return True
 
     if 'background' in args and args.background:
@@ -310,9 +362,10 @@ def is_dbus_required(args):
     return False
 
 
-def main():
+def main():  # noqa: C901
     """Entrypoint for dups."""
-    args = parse_args()
+    parsers = get_arg_parser()
+    args = parsers['main'].parse_args()
 
     if is_dbus_required(args) and dbus is None:
         print('To use any of the daemon functionality, "dbus-python" '
@@ -336,8 +389,16 @@ def main():
 
     LOGGER.debug('Using config: %s', cfg.config_file)
 
-    if args.command in ['backup', 'b']:
+    if args.command in ['list', 'l']:
+        handle(helper.print_backups, not args.no_valid, not args.no_invalid)
+
+    elif args.command in ['backup', 'b']:
         handle_backup(args, usr)
+
+    elif args.command in ['modify', 'm']:
+        if not any((args.set_valid, args.set_invalid)):
+            parsers['modify'].error('Missing at least one argument.')
+        handle_modify(args, usr)
 
     elif args.command in ['restore', 'r']:
         handle_restore(args, usr)
@@ -345,10 +406,39 @@ def main():
     elif args.command in ['remove', 'rm']:
         handle_remove(args)
 
-    else:
-        if args.daemon or args.system_daemon:
-            code = handle_daemon(usr, args.system_daemon)
-            sys.exit(code)
+    elif args.command in ['logs']:
+        if not any((args.backup, args.restore)):
+            parsers['logs'].error('Missing at least one argument.')
+        helper.print_log(usr, args.backup, args.restore)
 
-        else:
-            handle_management(args, cfg)
+    elif args.command in ['include', 'i']:
+        cfg.add_includes(args.items)
+
+    elif args.command in ['list-includes', 'li']:
+        print_items(
+            cfg.get_includes(),
+            not args.no_files,
+            not args.no_folders,
+            not args.no_patterns,
+        )
+
+    elif args.command in ['remove-includes', 'rmi']:
+        cfg.remove_includes(args.items)
+
+    elif args.command in ['exclude', 'e']:
+        cfg.add_excludes(args.items)
+
+    elif args.command in ['list-excludes', 'le']:
+        print_items(
+            cfg.get_excludes(),
+            not args.no_files,
+            not args.no_folders,
+            not args.no_patterns,
+        )
+    elif args.command in ['remove-excludes', 'rme']:
+        cfg.remove_excludes(args.items)
+
+    elif args.command in ['daemon', 'd']:
+        if not any((args.session, args.system)):
+            parsers['daemon'].error('Missing at least one argument.')
+        handle_daemon(usr, args.system)
