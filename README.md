@@ -72,6 +72,42 @@ Build files/scripts for some distributions can be found in
 For a full setup guide and usage examples see the
 [wiki](https://github.com/linuxwhatelse/dups/wiki).
 
+As a quick overview, here's dups main help message.  
+Individual commands may have additional arguments.
+```
+usage: dups [-h] [-u [USER]] [-c [CONFIG]] <command> ...
+
+It deduplicates things - Backup as simple as possible.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u [USER], --user [USER]
+                        Pretend to be this user for reading the config file,
+                        writing logs etc. while preserving the original users
+                        access rights. Only useful when run with elevated
+                        privileges.
+  -c [CONFIG], --config [CONFIG]
+                        Use this config file instead.
+
+Commands:
+  <command>
+    backup (b)          Start a new backup.
+    list (l)            List backups.
+    info (I)            Retrieve detailed backup info.
+    modify (m)          Modify the given backup(s).
+    restore (r)         Start a new restore.
+    remove (rm)         Remove one or more backups.
+    logs                Print the most recent log.
+    include (i)         Add items to be included.
+    list-includes (li)  List included items.
+    remove-includes (rmi)
+                        Remove included items.
+    exclude (e)         Add items to be excluded.
+    list-excludes (le)  List excluded items.
+    remove-excludes (rme)
+                        Remove excluded items.
+    daemon (d)          Start a daemon instance.
+```
 
 ## Deployment
 Packages for some distributions are automatically built and are available in

@@ -63,6 +63,11 @@ Build files/scripts for some distributions can be found in
 For a full setup guide and usage examples see the
 [wiki](https://github.com/linuxwhatelse/dups/wiki).
 
+As a quick overview, here's dups main help message.  
+Individual commands may have additional arguments.
+```
+[[ help ]]
+```
 
 ## Deployment
 Packages for some distributions are automatically built and are available in
