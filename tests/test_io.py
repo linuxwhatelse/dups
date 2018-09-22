@@ -156,7 +156,7 @@ class Test_IO(unittest.TestCase):
             f.write(msg)
 
         with open(context.TMP_FILE) as f:
-            self.assertEquals(msg, f.read())
+            self.assertEqual(msg, f.read())
 
 
 if __name__ == '__main__':
