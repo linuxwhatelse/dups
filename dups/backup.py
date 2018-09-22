@@ -234,9 +234,12 @@ class Backup(object):
         if self._io.exists(self.info_path):
             with self._io.open(self.info_path, 'r') as f:
                 try:
-                    return json.loads(f.read())
-                except Exception:
-                    pass
+                    data = f.read()
+                    if isinstance(data, bytes):
+                        data = data.decode()
+                    return json.loads(data)
+                except Exception as e:
+                    LOGGER.error(e)
         return {}
 
     @property
