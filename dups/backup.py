@@ -239,6 +239,11 @@ class Backup(object):
                     pass
         return {}
 
+    @property
+    def is_valid(self):
+        """bool: Whether or not this is valid."""
+        return self.info.get('valid', False)
+
     def set_info(self, key, value):
         """Set a info attribute for this backup.
 
@@ -251,11 +256,6 @@ class Backup(object):
 
         with self._io.open(self.info_path, 'w') as f:
             f.write(json.dumps(info, indent=2))
-
-    @property
-    def is_valid(self):
-        """bool: Whether or not this is valid."""
-        return self.info.get('valid', False)
 
     def set_valid(self, valid):
         """Change the backups valid state.
@@ -307,6 +307,8 @@ class Backup(object):
             self.backup_data_dir))
         if not dry_run:
             self._io.makedirs(self.backup_data_dir)
+            self.set_info('backup_started_at',
+                          datetime.datetime.now().strftime(self.PRETTY_FORMAT))
 
         link_dest = None
         latest = self.latest(self._io, self.backup_root_dir, True, False)
@@ -316,11 +318,15 @@ class Backup(object):
         target = rsync.Path(self.backup_data_dir, self._io.host)
         status = sync.sync(target, items, excludes, link_dest)
 
-        if not dry_run and self.info.get('size', None) is None:
-            self.calculate_size()
+        if not dry_run:
+            self.set_info('backup_finished_at',
+                          datetime.datetime.now().strftime(self.PRETTY_FORMAT))
 
-        if not dry_run and status.is_complete:
-            self.set_valid(True)
+            if self.info.get('size', None) is None:
+                self.calculate_size()
+
+            if status.is_complete:
+                self.set_valid(True)
 
         return status
 
@@ -353,7 +359,7 @@ class Backup(object):
 
         sources = []
         for item in items:
-            # Limit path information by insterting a dot and a slash into
+            # Limit path information by inserting a dot and a slash into
             # the source path.
             # Documented in rsync under the `--relative` option
             if item == self.backup_data_dir:
@@ -365,6 +371,12 @@ class Backup(object):
             sources.append(rsync.Path(item, self._io.host))
 
         status = sync.sync(target, sources)
+
+        if not dry_run:
+            restored_at = self.info.get('restored_at', [])
+            restored_at.append(datetime.datetime.now().strftime(
+                self.PRETTY_FORMAT))
+            self.set_info('restored_at', restored_at)
 
         return status
 

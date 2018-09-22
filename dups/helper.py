@@ -1,3 +1,4 @@
+import sys
 import datetime
 import logging
 import os
@@ -5,6 +6,7 @@ import socket
 import traceback
 from contextlib import contextmanager
 from typing import Tuple
+
 import paramiko
 import ruamel.yaml
 
@@ -233,6 +235,30 @@ def print_backups(include_valid=True, include_invalid=True):
             size = utils.bytes2human(size)
 
             print(b.name, '\t', b.name_pretty, '\t', valid, '\t', size)
+
+
+def print_backup_info(name=None):
+    """Print the given backup in a pretty way.
+
+    Args:
+        name (str): The name of the backup to print info for.
+            If `None`, the most recent backup will be used.
+    """
+    cfg = config.Config.get()
+
+    with configured_io() as io:
+        try:
+            if name:
+                bak = backup.Backup.from_name(io, name, cfg.target['path'])
+            else:
+                bak = backup.Backup.latest(io, cfg.target['path'])
+        except exceptions.BackupNotFoundException:
+            print('Backup "{}" does not exist!'.format(name))
+            return
+
+        yaml = ruamel.yaml.YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.dump(bak.info, sys.stdout)
 
 
 def create_backup(usr, dry_run=False,

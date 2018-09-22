@@ -511,7 +511,7 @@ class IO:
         if self.is_local:
             return shutil.rmtree(path)
 
-        # Using `IO.walk` to delete all files/folders is EXTREMLY slow
+        # Using `IO.walk` to delete all files/folders is EXTREMELY slow
         # over sftp (even to localhost connections).
         res = self._ssh.exec_command('rm -rf \'{}\''.format(path))
 

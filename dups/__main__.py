@@ -39,7 +39,11 @@ def get_arg_parser():
     subparser = parsers['main'].add_subparsers(
         title='Commands', dest='command', metavar='<command>', required=True)
 
-    # List backups
+    # --- Create backups ---
+    parsers['backup'] = subparser.add_parser('backup', aliases=['b'],
+                                             help='Start a new backup.')
+
+    # --- List backups ---
     parsers['list'] = subparser.add_parser('list', aliases=['l'],
                                            help='List backups.')
 
@@ -48,11 +52,16 @@ def get_arg_parser():
     parsers['list'].add_argument('-i', '--no-invalid', action='store_true',
                                  help='List without invalid backups.')
 
-    # Create backups
-    parsers['backup'] = subparser.add_parser('backup', aliases=['b'],
-                                             help='Start a new backup.')
+    # --- Backup info ---
+    parsers['info'] = subparser.add_parser(
+        'info', aliases=['I'], help='Retrieve detailed backup info.')
 
-    # Modify backups
+    parsers['info'].add_argument(
+        'backup', type=str, nargs='?',
+        help='Name of the backup to retrieve info for. If omitted, the most '
+        'recent backup is used.')
+
+    # --- Modify backups ---
     parsers['modify'] = subparser.add_parser(
         'modify', aliases=['m'], help='Modify the given backup(s).')
 
@@ -64,14 +73,14 @@ def get_arg_parser():
         '--set-invalid', action='store_true',
         help='Set the given backup(s) to be invalid.')
 
-    # Restore backups
+    # --- Restore backups ---
     parsers['restore'] = subparser.add_parser('restore', aliases=['r'],
                                               help='Start a new restore.')
 
     parsers['restore'].add_argument(
         '-b', '--backup', metavar='BACKUP', dest='restore', type=str,
-        default='latest', help='Name of the backup to restore from.'
-        'If omitted or set to "latest", the most recent backup is used.')
+        help='Name of the backup to restore from. If omitted, the most recent '
+        'backup is used.')
     parsers['restore'].add_argument(
         '-n', '--nth', metavar='NTH', dest='restore_nth', nargs='?', type=int,
         help='Restore from the nth backup in reverse order. '
@@ -86,7 +95,7 @@ def get_arg_parser():
         help='Restore the given files/folders. If omitted, the entire backup '
         'will be restored.')
 
-    # Remove backups
+    # --- Remove backups ---
     parsers['remove'] = subparser.add_parser(
         'remove', aliases=['rm'], help='Remove one or more backups.')
 
@@ -104,7 +113,7 @@ def get_arg_parser():
     parsers['remove'].add_argument('--invalid', action='store_true',
                                    help='Remove all invalid backups.')
 
-    # Print logs
+    # --- Print logs ---
     parsers['logs'] = subparser.add_parser('logs',
                                            help='Print the most recent log.')
     parsers['logs'].add_argument('-b', '--backup', action='store_true',
@@ -112,7 +121,7 @@ def get_arg_parser():
     parsers['logs'].add_argument('-r', '--restore', action='store_true',
                                  help='Print the most recent restore log.')
 
-    # Backup common options
+    # --- Backup common options ---
     for sp in [parsers['backup'], parsers['restore'], parsers['remove']]:
         if sp != parsers['remove']:
             sp.add_argument(
@@ -134,7 +143,7 @@ def get_arg_parser():
         sp.add_argument('--dry-run', action='store_true',
                         help='Perform a trial run with no changes made.')
 
-    # Include commands
+    # --- Include commands ---
     parsers['include'] = subparser.add_parser('include', aliases=['i'],
                                               help='Add items to be included.')
     parsers['include'].add_argument(
@@ -154,7 +163,7 @@ def get_arg_parser():
         'patterns use single quotes to ensure they are not resolved by your '
         'shell.')
 
-    # Exclude commands
+    # --- Exclude commands ---
     parsers['exclude'] = subparser.add_parser('exclude', aliases=['e'],
                                               help='Add items to be excluded.')
     parsers['exclude'].add_argument(
@@ -174,7 +183,7 @@ def get_arg_parser():
         'patterns use single quotes to ensure they are not resolved by your '
         'shell.')
 
-    # Include/Exclude common options
+    # --- Include/Exclude common options ---
     for sp in [parsers['list-includes'], parsers['list-excludes']]:
         sp.add_argument('-f', '--no-files', action='store_true',
                         help='List without files.')
@@ -254,9 +263,6 @@ def handle_restore(args, usr):
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
     name = args.restore
-
-    if args.restore == 'latest':
-        name = None
 
     if args.restore_nth:
         with helper.configured_io() as io:
@@ -391,6 +397,9 @@ def main():  # noqa: C901
 
     if args.command in ['list', 'l']:
         handle(helper.print_backups, not args.no_valid, not args.no_invalid)
+
+    elif args.command in ['info', 'I']:
+        handle(helper.print_backup_info, args.backup)
 
     elif args.command in ['backup', 'b']:
         handle_backup(args, usr)
