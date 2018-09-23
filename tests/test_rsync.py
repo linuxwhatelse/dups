@@ -4,7 +4,7 @@ import os
 import shutil
 import unittest
 
-from dups import helper, rsync, const
+from dups import rsync, const
 
 import utils as test_utils
 
@@ -84,6 +84,7 @@ class Test_rsync(unittest.TestCase):
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
         del expected_data['test.dir']['dir2']
+        del expected_data[context.SPECIAL_NAME]
 
         # Send the files
         target = rsync.Path(context.TMP_DIR)
@@ -101,11 +102,29 @@ class Test_rsync(unittest.TestCase):
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
         del expected_data['test.dir']['dir2']
+        del expected_data[context.SPECIAL_NAME]
 
         # Send the files
         target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
         sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
                   excludes=['**/dir2/.gitkeep'])
+
+        # Get and compare the structure of our sync target
+        synced_data = test_utils.get_dir_struct(self.real_target)
+        self.assertEqual(expected_data, synced_data)
+
+    def test_local_special_char(self):
+        sync = rsync.rsync()
+        sync.dry_run = False
+
+        # Define the structure we expect after synchronizing
+        expected_data = self.data_dir_struct
+        del expected_data['test.dir']
+        del expected_data['test.file']
+
+        # Send the files
+        target = rsync.Path(context.TMP_DIR)
+        sync.sync(target, [context.SPECIAL_FILE])
 
         # Get and compare the structure of our sync target
         synced_data = test_utils.get_dir_struct(self.real_target)
@@ -119,6 +138,7 @@ class Test_rsync(unittest.TestCase):
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
         del expected_data['test.dir']['dir2']['.gitkeep']
+        del expected_data[context.SPECIAL_NAME]
 
         # Send the files
         target = rsync.Path(context.TMP_DIR)

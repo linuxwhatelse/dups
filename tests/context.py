@@ -9,8 +9,11 @@ BACKUP_DIR = os.path.join(HERE, 'backups')
 
 DATA_DIR = os.path.join(HERE, 'data')
 
-TEST_DIR = os.path.join(HERE, 'data', 'test.dir')
-TEST_FILE = os.path.join(HERE, 'data', 'test.file')
+TEST_DIR = os.path.join(DATA_DIR, 'test.dir')
+TEST_FILE = os.path.join(DATA_DIR, 'test.file')
+
+SPECIAL_NAME = 'special ^°!"§$%&()=?´`+~#\',.-<>| \ \\\\ \\\\\\ \\\\\\\\'
+SPECIAL_FILE = os.path.join(DATA_DIR, SPECIAL_NAME)
 
 TMP_DIR = os.path.join(HERE, 'tmp.dir')
 TMP_FILE = os.path.join(HERE, 'tmp.file')

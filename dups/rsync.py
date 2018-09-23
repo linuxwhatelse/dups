@@ -1,5 +1,7 @@
 import logging
 import os
+import re
+import shlex
 import subprocess
 from typing import List, TypeVar
 
@@ -155,7 +157,7 @@ class rsync(object):
             cmd.insert(1, '--dry-run')
 
         if self.out_format:
-            cmd.extend(('--out-format', self.out_format))
+            cmd.extend(('--out-format', shlex.quote(self.out_format)))
 
         if self.acls:
             cmd.append('--acls')
@@ -176,7 +178,7 @@ class rsync(object):
         ]
 
         if self.ssh_config_file and os.path.exists(self.ssh_config_file):
-            cmd.extend(('-F', self.ssh_config_file))
+            cmd.extend(('-F', shlex.quote(self.ssh_config_file)))
 
         return cmd
 
@@ -195,7 +197,7 @@ class rsync(object):
         if self._proc:
             raise RuntimeError('A process is already running!')
 
-        command = subprocess.list2cmdline(command)
+        command = ' '.join(command)
 
         LOGGER.info('Executing rsync:')
         LOGGER.info(command)
@@ -216,6 +218,17 @@ class rsync(object):
             proc.wait()
 
         self._proc = None
+
+    def _escape(self, path):
+        """Escape all characters except for a select view.
+
+        Args:
+            path (str): Path to escape.
+
+        Returns:
+            str: Escaped version of the provided path.
+        """
+        return re.sub(r'([^a-zA-Z0-9,._+:@%/\-*])', r'\\\1', path)
 
     def sync(self, target: Path, includes: [List[str], List[Path]],
              excludes=None, link_dest=None) -> Status:
@@ -240,23 +253,24 @@ class rsync(object):
         if not excludes:
             excludes = []
 
-        cmd[1:1] = ['-e', ' '.join(ssh_cmd)]
+        cmd[1:1] = ['-e', shlex.quote(' '.join(ssh_cmd))]
 
         # Ensure PWD is "/" so source patterns always get expanded from the
         # same base directory.
         cmd[0:0] = ['cd', '/;']
 
         includes = list(
-            i.resolved if isinstance(i, Path) else i for i in includes)
+            self._escape(i.resolved) if isinstance(i, Path) else self.
+            _escape(i) for i in includes)
 
         tmp = []
         for e in excludes:
-            tmp.extend(('--exclude', "'{}'".format(e)))
+            tmp.extend(('--exclude', shlex.quote(e)))
         excludes = tmp
 
         if link_dest:
             cmd.append('--delete')
-            cmd.extend(('--link-dest', link_dest))
+            cmd.extend(('--link-dest', shlex.quote(link_dest)))
 
         cmd.extend(includes)
         cmd.extend(excludes)

@@ -89,7 +89,7 @@ class Backup(object):
             root_dir (str): Path to the root directory in which backups
                 are stored.
             include_valid (bool): Whether or not to include valid backups.
-            include_invalid (bool): Whether or not to include invalid bakcups.
+            include_invalid (bool): Whether or not to include invalid backup.
 
         Returns:
             list: A list consisting of `Backup`_ instances.
@@ -132,7 +132,7 @@ class Backup(object):
             root_dir (str): Path to the root directory in which backups
                 are stored.
             include_valid (bool): Whether or not to include valid backups.
-            include_invalid (bool): Whether or not to include invalid bakcups.
+            include_invalid (bool): Whether or not to include invalid backups.
 
         Returns:
             Backup: A instance of `Backup`_.

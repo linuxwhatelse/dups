@@ -148,9 +148,10 @@ def get_arg_parser():
                                               help='Add items to be included.')
     parsers['include'].add_argument(
         'items', nargs='*', type=str,
-        help='Folders, file and/or patterns to be include. When adding '
-        'patterns use single quotes to ensure they are not resolved by your '
-        'shell.')
+        help='Folders, file and/or patterns to be include. Patterns only '
+        'support the wildcard (*) character. '
+        'When adding patterns use single quotes to ensure they are not '
+        'resolved by your shell.')
 
     parsers['list-includes'] = subparser.add_parser(
         'list-includes', aliases=['li'], help='List included items.')
