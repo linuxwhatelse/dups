@@ -197,7 +197,7 @@ class rsync(object):
         if self._proc:
             raise RuntimeError('A process is already running!')
 
-        command = ' '.join(command)
+        command = ' '.join(command).encode()
 
         LOGGER.info('Executing rsync:')
         LOGGER.info(command)

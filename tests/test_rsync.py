@@ -4,7 +4,7 @@ import os
 import shutil
 import unittest
 
-from dups import rsync, const
+from dups import const, rsync
 
 import utils as test_utils
 
@@ -41,7 +41,7 @@ class Test_Status(unittest.TestCase):
 class Test_rsync(unittest.TestCase):
     @property
     def data_dir_struct(self):
-        return test_utils.get_dir_struct(context.DATA_DIR)
+        return test_utils.get_dir_struct(context.DATA_DIR.encode())
 
     @property
     def real_target(self):
@@ -83,7 +83,7 @@ class Test_rsync(unittest.TestCase):
 
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
-        del expected_data['test.dir']['dir2']
+        del expected_data[b'test.dir'][b'dir2']
         del expected_data[context.SPECIAL_NAME]
 
         # Send the files
@@ -92,7 +92,7 @@ class Test_rsync(unittest.TestCase):
                   excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = test_utils.get_dir_struct(self.real_target.encode())
         self.assertEqual(expected_data, synced_data)
 
     def test_remote_simple(self):
@@ -101,7 +101,7 @@ class Test_rsync(unittest.TestCase):
 
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
-        del expected_data['test.dir']['dir2']
+        del expected_data[b'test.dir'][b'dir2']
         del expected_data[context.SPECIAL_NAME]
 
         # Send the files
@@ -110,7 +110,7 @@ class Test_rsync(unittest.TestCase):
                   excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = test_utils.get_dir_struct(self.real_target.encode())
         self.assertEqual(expected_data, synced_data)
 
     def test_local_special_char(self):
@@ -119,15 +119,32 @@ class Test_rsync(unittest.TestCase):
 
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
-        del expected_data['test.dir']
-        del expected_data['test.file']
+        del expected_data[b'test.dir']
+        del expected_data[b'test.file']
 
         # Send the files
         target = rsync.Path(context.TMP_DIR)
-        sync.sync(target, [context.SPECIAL_FILE])
+        sync.sync(target, [context.SPECIAL_FILE.decode()])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = test_utils.get_dir_struct(self.real_target.encode())
+        self.assertEqual(expected_data, synced_data)
+
+    def test_remote_special_char(self):
+        sync = rsync.rsync()
+        sync.dry_run = False
+
+        # Define the structure we expect after synchronizing
+        expected_data = self.data_dir_struct
+        del expected_data[b'test.dir']
+        del expected_data[b'test.file']
+
+        # Send the files
+        target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
+        sync.sync(target, [context.SPECIAL_FILE.decode()])
+
+        # Get and compare the structure of our sync target
+        synced_data = test_utils.get_dir_struct(self.real_target.encode())
         self.assertEqual(expected_data, synced_data)
 
     def test_options(self):
@@ -137,7 +154,7 @@ class Test_rsync(unittest.TestCase):
 
         # Define the structure we expect after synchronizing
         expected_data = self.data_dir_struct
-        del expected_data['test.dir']['dir2']['.gitkeep']
+        del expected_data[b'test.dir'][b'dir2'][b'.gitkeep']
         del expected_data[context.SPECIAL_NAME]
 
         # Send the files
@@ -146,7 +163,7 @@ class Test_rsync(unittest.TestCase):
                   excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = test_utils.get_dir_struct(self.real_target.encode())
         self.assertEqual(expected_data, synced_data)
 
     def test_ssh_wrapper(self):

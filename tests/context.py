@@ -12,8 +12,8 @@ DATA_DIR = os.path.join(HERE, 'data')
 TEST_DIR = os.path.join(DATA_DIR, 'test.dir')
 TEST_FILE = os.path.join(DATA_DIR, 'test.file')
 
-SPECIAL_NAME = 'special ^°!"§$%&()=?´`+~#\',.-<>| \ \\\\ \\\\\\ \\\\\\\\'
-SPECIAL_FILE = os.path.join(DATA_DIR, SPECIAL_NAME)
+SPECIAL_NAME = 'special ^°!"§$%&()=?´`+~#\',.-<>| \ \\\\ \\\\\\ \\\\\\\\'.encode()
+SPECIAL_FILE = os.path.join(DATA_DIR.encode(), SPECIAL_NAME)
 
 TMP_DIR = os.path.join(HERE, 'tmp.dir')
 TMP_FILE = os.path.join(HERE, 'tmp.file')
