@@ -15,7 +15,7 @@ sudo docker build -f data/docker/Dockerfile.${DIST} \
     --pull --tag linuxwhatelse/dups-${DIST} .
 
 sudo docker run --name ${name} --rm -it -v $(pwd):/dups:ro linuxwhatelse/${name} \
-      /dups/data/scripts/travis/test-install.sh ${PKG_DIR}
+      /dups/data/scripts/ci/test-install.sh ${PKG_DIR}
 
 sudo docker run --name ${name} --rm -it -v $(pwd):/dups:ro linuxwhatelse/${name} \
-      /dups/data/scripts/travis/test-dups.sh ${PYTHON}
+      /dups/data/scripts/ci/test-dups.sh ${PYTHON}

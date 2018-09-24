@@ -2,7 +2,7 @@ image: Ubuntu
 
 environment:
   global:
-    SCRIPTS: /dups/data/scripts/travis
+    SCRIPTS: /dups/data/scripts/ci
 
   matrix:
     # DIST: Distribution / Release name.
