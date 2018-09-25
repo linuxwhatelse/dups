@@ -1,9 +1,16 @@
-![alt text](https://user-images.githubusercontent.com/35057858/45991285-60762c80-c0ae-11e8-8db7-2dc024dca7fd.png)
+<p align="center">
+  <img alt="dups banner" src="https://github.com/linuxwhatelse/dups/blob/master/media/dups-banner.png">
+</p>
+<p align="center">
+  <a href="https://saythanks.io/to/tadly">
+    <img alt="Say Thanks" src="https://img.shields.io/badge/say-thanks-e91e63.svg">
+  </a>
+  <a href="https://ci.appveyor.com/project/tadly/dups/branch/master">
+    <img alt="Build status" src="https://ci.appveyor.com/api/projects/status/ia8xtstfs2bkxu8g/branch/master?svg=true">
+  </a>
+</p>
 
-# dups
-[![Say Thanks!](https://img.shields.io/badge/say-thanks-e91e63.svg)](https://saythanks.io/to/tadly)
-[![Build status](https://ci.appveyor.com/api/projects/status/ia8xtstfs2bkxu8g/branch/master?svg=true)](https://ci.appveyor.com/project/tadly/dups/branch/master)
-
+# Overview
 dups is a simple backup utility which uses [rsync](https://rsync.samba.org/)
 for the heavy lifting in the background and adds some sugar around it.  
   
