@@ -1,3 +1,5 @@
+![alt text](https://user-images.githubusercontent.com/35057858/45991285-60762c80-c0ae-11e8-8db7-2dc024dca7fd.png)
+
 # dups
 [![Say Thanks!](https://img.shields.io/badge/say-thanks-e91e63.svg)](https://saythanks.io/to/tadly)
 [![Build status](https://ci.appveyor.com/api/projects/status/ia8xtstfs2bkxu8g/branch/master?svg=true)](https://ci.appveyor.com/project/tadly/dups/branch/master)
