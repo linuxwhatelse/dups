@@ -113,13 +113,13 @@ def get_arg_parser():
     parsers['remove'].add_argument('--invalid', action='store_true',
                                    help='Remove all invalid backups.')
 
-    # --- Print logs ---
-    parsers['logs'] = subparser.add_parser('logs',
-                                           help='Print the most recent log.')
-    parsers['logs'].add_argument('-b', '--backup', action='store_true',
-                                 help='Print the most recent backup log.')
-    parsers['logs'].add_argument('-r', '--restore', action='store_true',
-                                 help='Print the most recent restore log.')
+    # --- Print log ---
+    parsers['log'] = subparser.add_parser('log',
+                                          help='Print backup/restore logs.')
+    parsers['log'].add_argument('-b', '--backup', action='store_true',
+                                help='Print the most recent backup log.')
+    parsers['log'].add_argument('-r', '--restore', action='store_true',
+                                help='Print the most recent restore log.')
 
     # --- Backup common options ---
     for sp in [parsers['backup'], parsers['restore'], parsers['remove']]:
@@ -143,49 +143,33 @@ def get_arg_parser():
         sp.add_argument('--dry-run', action='store_true',
                         help='Perform a trial run with no changes made.')
 
-    # --- Include commands ---
-    parsers['include'] = subparser.add_parser('include', aliases=['i'],
-                                              help='Add items to be included.')
+    # --- Include/Exclude commands ---
+    parsers['include'] = subparser.add_parser(
+        'include', aliases=['i'], help='List/Add/Remove include items.')
+    parsers['i'] = parsers['include']
     parsers['include'].add_argument(
         'items', nargs='*', type=str,
-        help='Folders, file and/or patterns to be include. Patterns only '
+        help='Folders, file and/or patterns to add/remove. Patterns only '
         'support the wildcard (*) character. '
-        'When adding patterns use single quotes to ensure they are not '
-        'resolved by your shell.')
+        'When adding/removing patterns, use single quotes to ensure they are '
+        'not resolved by your shell.')
 
-    parsers['list-includes'] = subparser.add_parser(
-        'list-includes', aliases=['li'], help='List included items.')
-
-    parsers['remove-includes'] = subparser.add_parser(
-        'remove-includes', aliases=['rmi'], help='Remove included items.')
-    parsers['remove-includes'].add_argument(
-        'items', nargs='*', type=str,
-        help='Remove the given items from the include list. When removing '
-        'patterns use single quotes to ensure they are not resolved by your '
-        'shell.')
-
-    # --- Exclude commands ---
-    parsers['exclude'] = subparser.add_parser('exclude', aliases=['e'],
-                                              help='Add items to be excluded.')
+    parsers['exclude'] = subparser.add_parser(
+        'exclude', aliases=['e'], help='List/Add/Remove exclude items.')
+    parsers['e'] = parsers['exclude']
     parsers['exclude'].add_argument(
         'items', nargs='*', type=str,
         help='Folders, file and/or patterns to be excluded. When adding '
         'patterns use single quotes to ensure they are not resolved by your '
         'shell.')
 
-    parsers['list-excludes'] = subparser.add_parser(
-        'list-excludes', aliases=['le'], help='List excluded items.')
-
-    parsers['remove-excludes'] = subparser.add_parser(
-        'remove-excludes', aliases=['rme'], help='Remove excluded items.')
-    parsers['remove-excludes'].add_argument(
-        'items', nargs='*', type=str,
-        help='Remove the given items from the exclude list. When removing '
-        'patterns use single quotes to ensure they are not resolved by your '
-        'shell.')
-
     # --- Include/Exclude common options ---
-    for sp in [parsers['list-includes'], parsers['list-excludes']]:
+    for sp in [parsers['include'], parsers['exclude']]:
+        sp.add_argument('-r', '--remove', action='store_true',
+                        help='Instead of adding, remove the given item(s).')
+
+        sp.add_argument('-l', '--list', action='store_true',
+                        help='List all items.')
         sp.add_argument('-f', '--no-files', action='store_true',
                         help='List without files.')
         sp.add_argument('-F', '--no-folders', action='store_true',
@@ -327,25 +311,38 @@ def handle_daemon(usr, system=False):
         sys.exit(1)
 
 
-def print_items(items, files=True, folders=True, patterns=True):
-    """Print the given items.
+def handle_items(cfg, args):
+    """Handle the include/exclude sub-command."""
+    if args.command in ['include', 'i']:
+        add = cfg.add_includes
+        get = cfg.get_includes
+        remove = cfg.remove_includes
+    elif args.command in ['exclude', 'e']:
+        add = cfg.add_excludes
+        get = cfg.get_excludes
+        remove = cfg.remove_excludes
+    else:
+        return
 
-    Args:
-        files (bool): If `True`, include all files.
-        folders (bool): If `True`, include all folders.
-        patters (bool): If `True`, include all patterns.
-    """
-    if not files:
-        del items['files']
+    if args.remove:
+        remove(args.items)
 
-    if not folders:
-        del items['folders']
+    elif args.list:
+        items = get()
+        if args.no_files:
+            del items['files']
 
-    if not patterns:
-        del items['patterns']
+        if args.no_folders:
+            del items['folders']
 
-    items = [item for elem in items.values() for item in elem]
-    print('\n'.join(sorted(items)))
+        if args.no_patterns:
+            del items['patterns']
+
+        items = [item for elem in items.values() for item in elem]
+        print('\n'.join(sorted(items)))
+
+    else:
+        add(args.items)
 
 
 def is_dbus_required(args):
@@ -416,37 +413,15 @@ def main():  # noqa: C901
     elif args.command in ['remove', 'rm']:
         handle_remove(args)
 
-    elif args.command in ['logs']:
+    elif args.command in ['log']:
         if not any((args.backup, args.restore)):
-            parsers['logs'].error('Missing at least one argument.')
+            parsers['log'].error('Missing at least one argument.')
         helper.print_log(usr, args.backup, args.restore)
 
-    elif args.command in ['include', 'i']:
-        cfg.add_includes(args.items)
-
-    elif args.command in ['list-includes', 'li']:
-        print_items(
-            cfg.get_includes(),
-            not args.no_files,
-            not args.no_folders,
-            not args.no_patterns,
-        )
-
-    elif args.command in ['remove-includes', 'rmi']:
-        cfg.remove_includes(args.items)
-
-    elif args.command in ['exclude', 'e']:
-        cfg.add_excludes(args.items)
-
-    elif args.command in ['list-excludes', 'le']:
-        print_items(
-            cfg.get_excludes(),
-            not args.no_files,
-            not args.no_folders,
-            not args.no_patterns,
-        )
-    elif args.command in ['remove-excludes', 'rme']:
-        cfg.remove_excludes(args.items)
+    elif args.command in ['include', 'i', 'exclude', 'e']:
+        if not any((args.items, args.list)):
+            parsers[args.command].error('Missing items and/or arguments.')
+        handle_items(cfg, args)
 
     elif args.command in ['daemon', 'd']:
         if not any((args.session, args.system)):

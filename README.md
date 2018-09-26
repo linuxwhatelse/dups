@@ -106,15 +106,9 @@ Commands:
     modify (m)          Modify the given backup(s).
     restore (r)         Start a new restore.
     remove (rm)         Remove one or more backups.
-    logs                Print the most recent log.
-    include (i)         Add items to be included.
-    list-includes (li)  List included items.
-    remove-includes (rmi)
-                        Remove included items.
-    exclude (e)         Add items to be excluded.
-    list-excludes (le)  List excluded items.
-    remove-excludes (rme)
-                        Remove excluded items.
+    log                 Print backup/restore logs.
+    include (i)         List/Add/Remove include items.
+    exclude (e)         List/Add/Remove exclude items.
     daemon (d)          Start a daemon instance.
 ```
 
