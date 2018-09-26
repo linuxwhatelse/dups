@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import shlex
 import subprocess
 from typing import List, TypeVar
@@ -29,7 +28,7 @@ class Path(object):
 
     @property
     def resolved(self):
-        """str: If local, the path origianlly provided.
+        """str: If local, the path originally provided.
            If remote, <host>:<path>
         """
         if self.is_local:
@@ -54,7 +53,7 @@ class Status(object):
         4: 'Requested action not supported: an attempt was made to \
             manipulate 64-bit files on a platform that cannot support them; \
             or an option was specified that is supported by the client \
-            and not by the server.',
+            and not by the server.'                                                                      ,
         5: 'Error starting client-server protocol',
         6: 'Daemon unable to append to log-file',
         10: 'Error in socket I/O',
@@ -200,7 +199,7 @@ class rsync(object):
         command = ' '.join(command).encode()
 
         LOGGER.info('Executing rsync:')
-        LOGGER.info(command)
+        LOGGER.info(command.decode())
 
         with subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, bufsize=1,
@@ -219,17 +218,6 @@ class rsync(object):
 
         self._proc = None
 
-    def _escape(self, path):
-        """Escape all characters except for a select view.
-
-        Args:
-            path (str): Path to escape.
-
-        Returns:
-            str: Escaped version of the provided path.
-        """
-        return re.sub(r'([^a-zA-Z0-9,._+:@%/\-*])', r'\\\1', path)
-
     def sync(self, target: Path, includes: [List[str], List[Path]],
              excludes=None, link_dest=None) -> Status:
         """Send the given files to the given target.
@@ -239,7 +227,9 @@ class rsync(object):
                 synchronize to.
             includes (list|Path): List of files, folders, and patterns to
                 include.
+                These have to be properly quoted and/or escaped.
             excludes (list): List of files, folders, and patterns to exclude.
+                These have to be properly quoted and/or escaped.
             link_dest (str): Absolute path to a directory used for hadlinks
                 in case files haven't changed.
                 If `None`_, don't link with a directory.
@@ -259,23 +249,19 @@ class rsync(object):
         # same base directory.
         cmd[0:0] = ['cd', '/;']
 
-        includes = list(
-            self._escape(i.resolved) if isinstance(i, Path) else self.
-            _escape(i) for i in includes)
-
-        tmp = []
-        for e in excludes:
-            tmp.extend(('--exclude', shlex.quote(e)))
-        excludes = tmp
-
         if link_dest:
             cmd.append('--delete')
             cmd.extend(('--link-dest', shlex.quote(link_dest)))
 
+        includes = list(
+            i.resolved if isinstance(i, Path) else i for i in includes)
         cmd.extend(includes)
-        cmd.extend(excludes)
 
-        cmd.append(target.resolved)
+        excludes = map(lambda e: ('--exclude', e), excludes)
+        for e in excludes:
+            cmd.extend(e)
+
+        cmd.append(shlex.quote(target.resolved))
 
         for line in self._exec(cmd):
             LOGGER.info(line)

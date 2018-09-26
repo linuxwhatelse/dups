@@ -111,32 +111,9 @@ class Test_Backup(unittest.TestCase):
         self.assertTrue(os.path.exists(bak.backup_data_dir))
 
         # Define the structure we expect after the backup
-        expected_data = test_utils.get_dir_struct(context.DATA_DIR.encode())
-
-        del expected_data[b'test.dir'][b'dir2']
-        del expected_data[context.SPECIAL_NAME]
-
-        real_data_dir = os.path.join(bak.backup_data_dir,
-                                     context.DATA_DIR.lstrip('/'))
-
-        synced_data = test_utils.get_dir_struct(real_data_dir.encode())
-        self.assertEqual(expected_data, synced_data)
-
-        io.close()
-
-    @data('local', 'remote')
-    def test_backup_special_char(self, target):
-        io = self.get_io(target)
-
-        bak = backup.Backup.new(io, context.BACKUP_DIR)
-        status = bak.backup([context.SPECIAL_FILE.decode()])
-
-        self.assertEqual(status.exit_code, 0)
-
-        # Define the structure we expect after the backup
         expected_data = test_utils.get_dir_struct(context.DATA_DIR)
-        del expected_data['test.dir']
-        del expected_data['test.file']
+
+        del expected_data['test.dir']['dir2']
 
         real_data_dir = os.path.join(bak.backup_data_dir,
                                      context.DATA_DIR.lstrip('/'))
@@ -157,14 +134,13 @@ class Test_Backup(unittest.TestCase):
         self.assertEqual(status.exit_code, 0)
 
         # Define the structure we expect after the backup
-        expected_data = test_utils.get_dir_struct(context.DATA_DIR.encode())
-        del expected_data[b'test.dir'][b'dir2']
-        del expected_data[context.SPECIAL_NAME]
+        expected_data = test_utils.get_dir_struct(context.DATA_DIR)
+        del expected_data['test.dir']['dir2']
 
         real_data_dir = os.path.join(bak.backup_data_dir,
                                      context.DATA_DIR.lstrip('/'))
 
-        synced_data = test_utils.get_dir_struct(real_data_dir.encode())
+        synced_data = test_utils.get_dir_struct(real_data_dir)
         self.assertEqual(expected_data, synced_data)
 
         io.close()
