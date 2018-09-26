@@ -136,6 +136,10 @@ New features should also be properly unittested.
 * **tadly** - *Initial work* - [tadly](https://github.com/tadly)
 
 
+## Credits
+* **Andela Denaro** - *Logo design* - [andeladenaro](https://github.com/andeladenaro)
+
+
 ## License
 This project is licensed under the GNU General Public License v3.0 - see the
 [LICENSE](LICENSE) file for details
