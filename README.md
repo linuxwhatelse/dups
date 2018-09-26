@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="dups banner" src="https://github.com/linuxwhatelse/dups/blob/master/media/dups-banner.png">
+  <img alt="dups banner" width="300" src="https://github.com/linuxwhatelse/dups/blob/master/media/dups-banner.png">
 </p>
 <p align="center">
   <a href="https://saythanks.io/to/tadly">
@@ -12,7 +12,7 @@
 
 # Overview
 dups is a simple backup utility which uses [rsync](https://rsync.samba.org/)
-for the heavy lifting in the background and adds some sugar around it. 
+for the heavy lifting in the background and adds some sugar around it.  
   
 To reduce disk space and subsequent backup times, dups relies on rsyncs
 `--link-dest` option which hardlinks to existing unchanged files.

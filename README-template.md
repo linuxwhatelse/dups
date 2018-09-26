@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="dups banner" src="https://github.com/linuxwhatelse/dups/blob/master/media/dups-banner.png">
+  <img alt="dups banner" width="300" src="https://github.com/linuxwhatelse/dups/blob/master/media/dups-banner.png">
 </p>
 <p align="center">
   <a href="https://saythanks.io/to/tadly">
