@@ -53,7 +53,7 @@ class Status(object):
         4: 'Requested action not supported: an attempt was made to \
             manipulate 64-bit files on a platform that cannot support them; \
             or an option was specified that is supported by the client \
-            and not by the server.'                                                                      ,
+            and not by the server.',
         5: 'Error starting client-server protocol',
         6: 'Daemon unable to append to log-file',
         10: 'Error in socket I/O',
@@ -227,9 +227,7 @@ class rsync(object):
                 synchronize to.
             includes (list|Path): List of files, folders, and patterns to
                 include.
-                These have to be properly quoted and/or escaped.
             excludes (list): List of files, folders, and patterns to exclude.
-                These have to be properly quoted and/or escaped.
             link_dest (str): Absolute path to a directory used for hadlinks
                 in case files haven't changed.
                 If `None`_, don't link with a directory.
@@ -253,11 +251,20 @@ class rsync(object):
             cmd.append('--delete')
             cmd.extend(('--link-dest', shlex.quote(link_dest)))
 
-        includes = list(
-            i.resolved if isinstance(i, Path) else i for i in includes)
+        for i, item in enumerate(includes):
+            if isinstance(item, Path):
+                if not item.is_local:
+                    includes[i] = shlex.quote(item.resolved)
+                    continue
+                else:
+                    item = item.resolved
+
+            if os.path.exists(item):
+                includes[i] = shlex.quote(item)
+
         cmd.extend(includes)
 
-        excludes = map(lambda e: ('--exclude', e), excludes)
+        excludes = map(lambda e: ('--exclude', shlex.quote(e)), excludes)
         for e in excludes:
             cmd.extend(e)
 

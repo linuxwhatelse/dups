@@ -1,8 +1,6 @@
 import datetime
 import logging
 import os
-import re
-import shlex
 import socket
 import sys
 import traceback
@@ -287,19 +285,8 @@ def create_backup(usr, dry_run=False,
 
         with configured_io() as io:
             bak = backup.Backup.new(io, cfg.target['path'])
-
-            includes = []
-            for type_, items in cfg.get_includes().items():
-                callback = shlex.quote
-
-                if type_ == 'patterns':
-                    callback = escape_pattern
-
-                includes.extend(list(map(callback, items)))
-
-            excludes = list(shlex.quote(e) for e in cfg.get_excludes(True))
-
-            status = bak.backup(includes, excludes, dry_run)
+            status = bak.backup(
+                cfg.get_includes(True), cfg.get_excludes(True), dry_run)
 
             return bak, status
 
@@ -343,7 +330,7 @@ def restore_backup(usr, items=None, name=None, target=None, dry_run=False,
                 target = os.path.abspath(target)
 
             if items:
-                items = [shlex.quote(os.path.abspath(i)) for i in items]
+                items = [os.path.abspath(i) for i in items]
 
             utils.add_logging_handler('restore.log', usr)
 
@@ -448,16 +435,3 @@ def remove_invalid(dry_run=False):
         names = list(b.name for b in get_backups(io) if not b.is_valid)
 
     remove_backups(names, dry_run)
-
-
-def escape_pattern(pattern):
-    """Escape the given pattern in such a way it supports basic shell
-    expansion.
-
-    Args:
-        pattern (str): Pattern to escape.
-
-    Returns:
-        str: Escaped version of the provided pattern.
-    """
-    return re.sub(r'([^a-zA-Z0-9,._+@%/\-*\\{}])', r'\\\1', pattern)

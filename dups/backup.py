@@ -288,10 +288,8 @@ class Backup(object):
         Args:
             items (list): List of files, folders, and patterns to include
                 in this backup.
-                These have to be properly quoted and/or escaped.
             excludes (list): List of files, folders, and patterns to exclude
                 from this backup.
-                These have to be properly quoted and/or escaped.
             dry_run (bool): Whether or not to perform a trial run with no
                 changes made.
 
@@ -342,7 +340,6 @@ class Backup(object):
             target (str): Where to restore the data to.
             items (list): List of files and folders to be restored.
                 If `None` or empty, the entire backup will be restored.
-                These have to be properly quoted and/or escaped.
             dry_run (bool): Whether or not to perform a trial run with no
                 changes made.
 
