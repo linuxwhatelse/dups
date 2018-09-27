@@ -11,15 +11,15 @@
 </p>
 
 # Overview
-dups is a simple backup utility which uses [rsync](https://rsync.samba.org/)
-for the heavy lifting in the background and adds some sugar around it.  
+dups is a simple backup utility using [rsync](https://rsync.samba.org/) for
+its heavy lifting while adding some convenience on top.  
   
 To reduce disk space and subsequent backup times, dups relies on rsyncs
 `--link-dest` option which hardlinks to existing unchanged files.
 
 
 ## Motivation
-Beeing unable to find a backup utility which would allow me to...
+Being unable to find a backup utility which would allow me to...
   * backup selected files and folders
   * exclude files and folders based on their path or patterns
   * easily access stored files without special tools  
