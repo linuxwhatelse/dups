@@ -4,7 +4,7 @@ RUN pacman -Sy
 
 # prep/test dependencies
 RUN pacman -S --noconfirm \
-    base-devel openssh git python python-pip python-ddt
+    base-devel openssh git python python-pip python-pytest
 
 # dups system dependencies
 RUN pacman -S  --noconfirm \

@@ -15,4 +15,4 @@ chown -R dups:dups /home/dups/source
 
 # Run all unittests
 cd /home/dups/source
-su dups -c "${PYTHON} -m unittest discover -v -s tests"
+su dups -c "${PYTHON} -m pytest -vv tests"

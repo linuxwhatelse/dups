@@ -1,26 +1,23 @@
 import context  # noqa: F401, isort:skip
 
-import unittest
-
 from dups import user
 
+import pytest
 
-class Test_User(unittest.TestCase):
+
+class Test_User:
     def test_valid(self):
         usr = user.User('root')
 
-        self.assertEqual(usr.user, 'root')
-        self.assertEqual(usr.uid, 0)
-        self.assertEqual(usr.gid, 0)
-        self.assertEqual(usr.home, '/root')
-        self.assertEqual(usr.config_dir, '/root/.config/dups')
-        self.assertEqual(usr.config_file, '/root/.config/dups/config.yaml')
-        self.assertEqual(usr.cache_dir, '/root/.cache/dups')
-        self.assertEqual(usr.xdg_runtime_dir, '/run/user/0')
+        assert usr.user == 'root'
+        assert usr.uid == 0
+        assert usr.gid == 0
+        assert usr.home == '/root'
+        assert usr.config_dir == '/root/.config/dups'
+        assert usr.config_file == '/root/.config/dups/config.yaml'
+        assert usr.cache_dir == '/root/.cache/dups'
+        assert usr.xdg_runtime_dir == '/run/user/0'
 
     def test_invalid(self):
-        self.assertRaises(ValueError, user.User, '__invalid__')
-
-
-if __name__ == '__main__':
-    unittest.main(exit=False)
+        with pytest.raises(ValueError):
+            user.User('__invalid__')

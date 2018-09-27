@@ -2,21 +2,19 @@ import context  # noqa: F401, isort:skip
 
 import os
 import shutil
-import unittest
 
 from dups import backup, exceptions, utils
 
+import pytest
 import utils as test_utils
-from ddt import data, ddt
 
 
-@ddt
-class Test_Backup(unittest.TestCase):
+class Test_Backup:
     missing_backup = '19900100000000'
     valid_backup = '19900101000000'
     invalid_backup = '19900102000000'
 
-    def tearDown(self):
+    def teardown_method(self, method):
         for dir_ in os.listdir(context.BACKUP_DIR):
             if dir_ in [self.valid_backup, self.invalid_backup]:
                 continue
@@ -41,7 +39,7 @@ class Test_Backup(unittest.TestCase):
         return backup.Backup.from_name(io, self.invalid_backup,
                                        context.BACKUP_DIR)
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_new(self, target):
         io = self.get_io(target)
 
@@ -53,7 +51,7 @@ class Test_Backup(unittest.TestCase):
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_from_label(self, target):
         io = self.get_io(target)
 
@@ -62,44 +60,43 @@ class Test_Backup(unittest.TestCase):
             self.get_valid(io)
 
         except Exception as e:
-            self.fail(str(e))
+            pytest.fail(str(e))
 
-        self.assertRaises(exceptions.BackupNotFoundException,
-                          backup.Backup.from_name, io, self.missing_backup,
-                          context.BACKUP_DIR)
+        with pytest.raises(exceptions.BackupNotFoundException):
+            backup.Backup.from_name(io, self.missing_backup,
+                                    context.BACKUP_DIR)
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_all_backups(self, target):
         io = self.get_io(target)
 
         # Get a list of valid backups
         backups = backup.Backup.all_backups(io, context.BACKUP_DIR)
-        self.assertCountEqual([self.get_valid(io)], backups)
+        assert len(backups) == 1
 
         # Get a list of all (valid and invalid) backups
         backups = backup.Backup.all_backups(io, context.BACKUP_DIR, True, True)
-        self.assertCountEqual(
-            [self.get_valid(io), self.get_invalid(io)], backups)
+        assert len(backups) == 2
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_latest(self, target):
         io = self.get_io(target)
 
         # Get the latest valid backup
         bak = backup.Backup.latest(io, context.BACKUP_DIR)
-        self.assertEqual(self.get_valid(io), bak)
+        assert self.get_valid(io) == bak
 
         # Get the latest backup including invalid ones
         bak = backup.Backup.latest(io, context.BACKUP_DIR, True, True)
-        self.assertEqual(self.get_invalid(io), bak)
+        assert self.get_invalid(io) == bak
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_backup(self, target):
         io = self.get_io(target)
 
@@ -107,8 +104,8 @@ class Test_Backup(unittest.TestCase):
         status = bak.backup([context.TEST_DIR, context.TEST_FILE],
                             excludes=['**/dir2/.gitkeep'])
 
-        self.assertEqual(status.exit_code, 0)
-        self.assertTrue(os.path.exists(bak.backup_data_dir))
+        assert status.exit_code == 0
+        assert os.path.exists(bak.backup_data_dir)
 
         # Define the structure we expect after the backup
         expected_data = test_utils.get_dir_struct(context.DATA_DIR)
@@ -119,11 +116,11 @@ class Test_Backup(unittest.TestCase):
                                      context.DATA_DIR.lstrip('/'))
 
         synced_data = test_utils.get_dir_struct(real_data_dir)
-        self.assertEqual(expected_data, synced_data)
+        assert expected_data == synced_data
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_backup_pattern(self, target):
         io = self.get_io(target)
 
@@ -131,7 +128,7 @@ class Test_Backup(unittest.TestCase):
         status = bak.backup([os.path.join(context.DATA_DIR, 'test*')],
                             excludes=['**/dir2'])
 
-        self.assertEqual(status.exit_code, 0)
+        assert status.exit_code == 0
 
         # Define the structure we expect after the backup
         expected_data = test_utils.get_dir_struct(context.DATA_DIR)
@@ -141,11 +138,11 @@ class Test_Backup(unittest.TestCase):
                                      context.DATA_DIR.lstrip('/'))
 
         synced_data = test_utils.get_dir_struct(real_data_dir)
-        self.assertEqual(expected_data, synced_data)
+        assert expected_data == synced_data
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_backup_dry_run(self, target):
         io = self.get_io(target)
 
@@ -153,69 +150,65 @@ class Test_Backup(unittest.TestCase):
         status = bak.backup([context.TEST_DIR, context.TEST_FILE],
                             dry_run=True)
 
-        self.assertEqual(status.exit_code, 0)
-        self.assertTrue(not os.path.exists(bak.backup_dir))
+        assert status.exit_code == 0
+        assert not os.path.exists(bak.backup_dir)
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_restore_items(self, target):
         io = self.get_io(target)
 
         bak = self.get_valid(io)
         status = bak.restore(context.TMP_DIR, ['/tmp/test1.file'])
 
-        self.assertEqual(status.exit_code, 0)
+        assert status.exit_code == 0
 
         expected_data = test_utils.get_dir_struct(bak.backup_data_dir)
         del expected_data['tmp']['test2.file']
         del expected_data['tmp']['test3.file']
 
         synced_data = test_utils.get_dir_struct(context.TMP_DIR)
-        self.assertEqual(expected_data, synced_data)
+        assert expected_data == synced_data
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_restore_full(self, target):
         io = self.get_io(target)
 
         bak = self.get_valid(io)
         status = bak.restore(context.TMP_DIR)
 
-        self.assertEqual(status.exit_code, 0)
+        assert status.exit_code == 0
 
         expected_data = test_utils.get_dir_struct(bak.backup_data_dir)
         synced_data = test_utils.get_dir_struct(context.TMP_DIR)
-        self.assertEqual(expected_data, synced_data)
+        assert expected_data == synced_data
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_restore_dry_run(self, target):
         io = self.get_io(target)
 
         bak = self.get_valid(io)
         status = bak.restore(context.TMP_DIR, dry_run=True)
 
-        self.assertEqual(status.exit_code, 0)
-        self.assertTrue(not os.path.exists(context.TMP_DIR))
+        assert status.exit_code == 0
+        assert not os.path.exists(context.TMP_DIR)
 
         io.close()
 
-    @data('local', 'remote')
+    @pytest.mark.parametrize('target', ['local', 'remote'])
     def test_remove(self, target):
         io = self.get_io(target)
 
         bak = backup.Backup.new(io, context.BACKUP_DIR)
         bak.backup([context.TEST_FILE])
 
-        self.assertTrue(os.path.exists(bak.backup_data_dir))
+        assert os.path.exists(bak.backup_data_dir)
         bak.remove()
-        self.assertTrue(not os.path.exists(bak.backup_data_dir))
+        assert not os.path.exists(bak.backup_data_dir)
 
         io.close()
-
-
-if __name__ == '__main__':
-    unittest.main(exit=False)
