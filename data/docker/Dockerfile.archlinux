@@ -1,9 +1,7 @@
 FROM base/archlinux
 
-RUN pacman -Sy
-
 # prep/test dependencies
-RUN pacman -S --noconfirm \
+RUN pacman -Sy && pacman -S --noconfirm \
     base-devel openssh git python python-pip python-pytest
 
 # dups system dependencies
