@@ -51,7 +51,7 @@ dbus-python  # Daemon support
 pygobject  # Desktop notification support
 
 # Unittests
-ddt
+pytest
 ```
 
 ### Installing
