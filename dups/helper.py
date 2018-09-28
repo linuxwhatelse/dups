@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import shlex
 import socket
 import sys
 import traceback
@@ -285,12 +286,12 @@ def create_backup(usr, dry_run=False,
 
         includes = []
         for type_, items in cfg.get_includes().items():
-            for elem in items:
-                if type_ in ['files', 'folders'] and not os.path.exists(elem):
-                    LOGGER.warning("Ignoring '{}': No such file or directory".
-                                   format(elem))
-                    continue
-                includes.append(elem)
+            if type_ in ['files', 'folders']:
+                items = list(
+                    shlex.quote(e) if not os.path.exists(e) else e
+                    for e in items)
+
+            includes.extend(items)
 
         with configured_io() as io:
             bak = backup.Backup.new(io, cfg.target['path'])
