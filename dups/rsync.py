@@ -45,6 +45,9 @@ class Status(object):
         their appropriate message.
     """
     EXIT_CODES = {
+        # Internal
+        -1: 'Not run yet',
+
         # rsync
         0: 'Success',
         1: 'Syntax or usage error',
@@ -114,7 +117,7 @@ class rsync(object):
     __instances = dict()
 
     _proc = None
-    _exit_code = None
+    _exit_code = -1
 
     rsync_bin = '/usr/bin/rsync'
     ssh_bin = '/usr/bin/ssh'
@@ -176,8 +179,11 @@ class rsync(object):
             'NumberOfPasswordPrompts=0'
         ]
 
-        if self.ssh_config_file and os.path.exists(self.ssh_config_file):
-            cmd.extend(('-F', shlex.quote(self.ssh_config_file)))
+        if self.ssh_config_file:
+            ssh_config_file = os.path.expanduser(self.ssh_config_file)
+            ssh_config_file = os.path.abspath(ssh_config_file)
+            if os.path.exists(ssh_config_file):
+                cmd.extend(('-F', ssh_config_file))
 
         return cmd
 
@@ -185,18 +191,24 @@ class rsync(object):
         """Execute the given comman.
 
         Args:
-            command (list): List of arguments forming a full command.
+            command (bytes): Command to execute.
 
         Yields:
             str: Each line of the commands output.
 
         Raises:
             RuntimeError: If a process is already running.
+            TypeError: If command is not a bytes-like object.
         """
         if self._proc:
             raise RuntimeError('A process is already running!')
 
-        command = ' '.join(command).encode()
+        if not isinstance(command, bytes):
+            raise TypeError(
+                "TypeError: a bytes-like object is required, not 'str'")
+
+        self._proc = None
+        self._exit_code = -1
 
         LOGGER.info('Executing rsync:')
         LOGGER.info(command.decode())
@@ -205,7 +217,6 @@ class rsync(object):
                               stderr=subprocess.STDOUT, bufsize=1,
                               universal_newlines=True) as proc:
             self._proc = proc
-            self._exit_code = None
 
             for line in iter(proc.stdout.readline, ''):
                 yield line.rstrip('\n').strip('"')
@@ -270,6 +281,7 @@ class rsync(object):
 
         cmd.append(shlex.quote(target.resolved))
 
+        cmd = ' '.join(cmd).encode()
         for line in self._exec(cmd):
             LOGGER.info(line)
 
