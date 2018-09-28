@@ -283,10 +283,18 @@ def create_backup(usr, dry_run=False,
     else:
         utils.add_logging_handler('backup.log', usr)
 
+        includes = []
+        for type_, items in cfg.get_includes().items():
+            for elem in items:
+                if type_ in ['files', 'folders'] and not os.path.exists(elem):
+                    LOGGER.warning("Ignoring '{}': No such file or directory".
+                                   format(elem))
+                    continue
+                includes.append(elem)
+
         with configured_io() as io:
             bak = backup.Backup.new(io, cfg.target['path'])
-            status = bak.backup(
-                cfg.get_includes(True), cfg.get_excludes(True), dry_run)
+            status = bak.backup(includes, cfg.get_excludes(True), dry_run)
 
             return bak, status
 
