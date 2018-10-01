@@ -11,7 +11,7 @@ def create_dir_struct(structure, target='.'):
         elif isinstance(item, dict):
             os.makedirs(path)
             if len(item) > 0:
-                create_dir_struct(path.decode(), item)
+                create_dir_struct(item, path.decode())
 
 
 def get_dir_struct(target):

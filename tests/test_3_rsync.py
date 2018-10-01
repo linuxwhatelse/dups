@@ -8,7 +8,7 @@ from unittest.mock import patch
 from dups import const, rsync
 
 import pytest
-import utils as test_utils
+import testutils
 
 
 class Test_Path:
@@ -92,11 +92,27 @@ class Test_rsync:
         assert b'--dry-run' not in cmd
 
     @patch('dups.rsync.rsync._exec')
+    def test_target_local(self, mock_exec):
+        sync = rsync.rsync()
+        sync.sync(rsync.Path('/backup-target'), [])
+
+        cmd = mock_exec.call_args[0][0]
+        assert cmd.endswith(b'/backup-target')
+
+    @patch('dups.rsync.rsync._exec')
+    def test_target_remote(self, mock_exec):
+        sync = rsync.rsync()
+        sync.sync(rsync.Path('/backup-target', 'localhost'), [])
+
+        cmd = mock_exec.call_args[0][0]
+        assert cmd.endswith(b'localhost:/backup-target')
+
+    @patch('dups.rsync.rsync._exec')
     def test_includes(self, mock_exec):
-        test_utils.create_dir_struct({
+        testutils.create_dir_struct({
             'simple.file': None,
             'simple folder': {},
-            r'special * folder': {},
+            'special * folder': {},
             r'''!"#$%&'()*+,-.012:;<=>?@ABC[\]^_`abc{|}~''': None
         })
 
@@ -111,7 +127,7 @@ class Test_rsync:
                 r'''!"#$%&'()*+,-.012:;<=>?@ABC[\]^_`abc{|}~''',
             ])
 
-        cmd = cmd = mock_exec.call_args[0][0]
+        cmd = mock_exec.call_args[0][0]
         assert b'simple.file' in cmd
         assert b"'simple folder'" in cmd
         assert b"'special * folder'" in cmd
@@ -134,11 +150,21 @@ class Test_rsync:
         assert b"--exclude 'simple folder'" in cmd
         assert b"--exclude '*.mkv'" in cmd
 
+    @patch('dups.rsync.rsync._exec')
+    def test_link_dest(self, mock_exec):
+        sync = rsync.rsync()
+        sync.sync(
+            rsync.Path('/'), [], link_dest='/special * path/previous_backup')
+
+        cmd = mock_exec.call_args[0][0]
+        assert b'--delete' in cmd
+        assert b"--link-dest '/special * path/previous_backup'" in cmd
+
 
 class Test_rsync_old:
     @property
     def data_dir_struct(self):
-        return test_utils.get_dir_struct(context.DATA_DIR)
+        return testutils.get_dir_struct(context.DATA_DIR)
 
     @property
     def real_target(self):
@@ -185,7 +211,7 @@ class Test_rsync_old:
                   excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = testutils.get_dir_struct(self.real_target)
         assert expected_data == synced_data
 
     def test_remote_simple(self):
@@ -202,7 +228,7 @@ class Test_rsync_old:
                   excludes=['**/dir2/.gitkeep'])
 
         # Get and compare the structure of our sync target
-        synced_data = test_utils.get_dir_struct(self.real_target)
+        synced_data = testutils.get_dir_struct(self.real_target)
         assert expected_data == synced_data
 
     def test_ssh_wrapper(self):
