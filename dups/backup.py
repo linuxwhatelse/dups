@@ -214,11 +214,6 @@ class Backup(object):
         return os.path.join(self.backup_dir, 'data')
 
     @property
-    def valid_path(self):
-        """str: Path to the backups '.valid' bit file."""
-        return os.path.join(self.backup_dir, '.valid')
-
-    @property
     def info_path(self):
         """str: Path to the backups '.info' file."""
         return os.path.join(self.backup_dir, '.info')
