@@ -3,7 +3,10 @@ import os
 
 def create_dir_struct(structure, target='.'):
     for name, item in structure.items():
-        path = os.path.join(os.path.abspath(target).encode(), name.encode())
+        if isinstance(name, str):
+            name = name.encode()
+
+        path = os.path.join(os.path.abspath(target).encode(), name)
 
         if item is None:
             open(path, 'a').close()
