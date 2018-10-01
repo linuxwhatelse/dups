@@ -28,3 +28,5 @@ CONFIG_TEMPLATE_FILE = os.path.join(HERE, 'data', 'config.yaml')
 DEFAULT_RESTORE_PATH = '/'
 
 SSH_WRAPPER_SCRIPT = os.path.join(HERE, 'data', 'ssh')
+
+GFFS_PATTERN = '7d4w12m5y'

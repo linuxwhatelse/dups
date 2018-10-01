@@ -1,3 +1,4 @@
+import calendar
 import collections
 import datetime
 import errno
@@ -30,7 +31,7 @@ def confirm(msg, default_yes=False):
 
     Args:
         msg (str): The message to display.
-        default_yes (bool): If yes should be the default anwer when pressing
+        default_yes (bool): If yes should be the default answer when pressing
             return without supplying an answer.
 
     Returns:
@@ -204,6 +205,58 @@ def bytes2human(n):
             return '{:.2f} {}'.format(value, symbol)
 
     return '{:.2f} {}'.format(n, symbols[0])
+
+
+def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None):
+    """Rotate the given datetimes based on the Grandfather-father-son
+    rotation-scheme.
+
+    Args:
+        datetimes (list[datetime.datetime]): List of datetimes to rotate.
+        days (int): Amount of days per week to keep.
+        weeks (int): Amount of weeks per month to keep.
+        months (int): Amount of months per year to keep.
+        years (int): Amount of years to keep.
+
+    Returns:
+        tuple([list, ...]): 5-tuple
+            ([daily], [weekly], [monthly], [yearly], [combined])
+    """
+    datetimes = sorted(datetimes, reverse=True)
+
+    if start is None:
+        start = datetimes[0]
+
+    daily = []
+    weekly = []
+    monthly = []
+    yearly = []
+
+    for dt in datetimes:
+        # Most recent "n" days
+        if dt > start - datetime.timedelta(days=7) and len(daily) < days:
+            daily.append(dt)
+            continue
+
+        # Skip the current week and current month
+        if dt.year + dt.isocalendar()[1] < start.year + start.isocalendar()[1]:
+            # Most recent "n" weeks
+            if dt.weekday() == 6 and len(weekly) < weeks:
+                weekly.append(dt)
+                continue
+
+            # Most recent "n" month
+            if (dt.day == calendar.monthrange(dt.year, dt.month)[1]
+                    and len(monthly) < months):
+                monthly.append(dt)
+                continue
+
+        # Most recent "n" years
+        if (dt.month == 12 and dt.day == 31 and len(yearly) < years):
+            yearly.append(dt)
+
+    combined = sorted([*daily, *weekly, *monthly, *yearly])
+    return (daily, weekly, monthly, yearly, combined)
 
 
 class IO:

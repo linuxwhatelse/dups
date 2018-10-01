@@ -2,10 +2,58 @@ import context  # noqa: F401, isort:skip
 
 import os
 import shutil
+from datetime import datetime, timedelta
 
 from dups import utils
 
 import pytest
+
+
+class Test_gffs:
+    def test_rotate_gffs(self):
+        start = datetime(2017, 12, 31)
+
+        datetimes = []
+        for i in range(1095):
+            datetimes.append(start - timedelta(days=i))
+
+        gffs = utils.rotate_gffs(datetimes, start=start)
+
+        assert gffs[0] == [
+            datetime(2017, 12, 31),
+            datetime(2017, 12, 30),
+            datetime(2017, 12, 29),
+            datetime(2017, 12, 28),
+            datetime(2017, 12, 27),
+            datetime(2017, 12, 26),
+            datetime(2017, 12, 25),
+        ]
+
+        assert gffs[1] == [
+            datetime(2017, 12, 24),
+            datetime(2017, 12, 17),
+            datetime(2017, 12, 10),
+            datetime(2017, 12, 3),
+        ]
+
+        assert gffs[2] == [
+            datetime(2017, 11, 30),
+            datetime(2017, 10, 31),
+            datetime(2017, 9, 30),
+            datetime(2017, 8, 31),
+            datetime(2017, 7, 31),
+            datetime(2017, 6, 30),
+            datetime(2017, 5, 31),
+            datetime(2017, 4, 30),
+            datetime(2017, 3, 31),
+            datetime(2017, 2, 28),
+            datetime(2017, 1, 31),
+            datetime(2016, 12, 31),
+        ]
+
+        assert gffs[3] == [
+            datetime(2015, 12, 31),
+        ]
 
 
 class Test_IO:
