@@ -5,7 +5,7 @@ import sys
 HERE = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.abspath(HERE))
 
-from dups import __main__  # isort:skip
+from dups import __main__  # noqa:E402 isort:skip
 
 if __name__ == '__main__':
     __main__.main()
