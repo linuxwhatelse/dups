@@ -9,10 +9,12 @@ def get_data_files():
 
     data_files = []
     if 'systemd' in include_data_files:
-        data_files.append(('/usr/lib/systemd/user/',
-                           ['data/usr/lib/systemd/user/dups.service']))
-        data_files.append(('/usr/lib/systemd/system/',
-                           ['data/usr/lib/systemd/system/dups@.service']))
+        data_files.extend((
+            ('/usr/lib/systemd/user/',
+             ['data/usr/lib/systemd/user/dups.service']),
+            ('/usr/lib/systemd/system/',
+             ['data/usr/lib/systemd/system/dups@.service']),
+        ))
 
     if 'dbus' in include_data_files:
         data_files.append(
@@ -20,9 +22,16 @@ def get_data_files():
              ['data/etc/dbus-1/system.d/de.linuxwhatelse.dups.daemon.conf']))
 
     if 'desktop' in include_data_files:
-        data_files.append(
+        data_files.extend((
             ('/usr/share/applications/',
-             ['data/usr/share/applications/de.linuxwhatelse.dups.desktop']))
+             ['data/usr/share/applications/de.linuxwhatelse.dups.desktop']),
+            ('/usr/share/icons/hicolor/48x48/apps/',
+             ['data/usr/share/icons/hicolor/48x48/apps/dups.png']),
+            ('/usr/share/icons/hicolor/512x512/apps/',
+             ['data/usr/share/icons/hicolor/512x512/apps/dups.png']),
+            ('/usr/share/icons/hicolor/scalable/apps/',
+             ['data/usr/share/icons/hicolor/scalable/apps/dups.svg']),
+        ))
 
     return data_files
 

@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 APP_NAME = 'dups'
 APP_ID = 'de.linuxwhatelse.dups'
-APP_ICON = 'security-high'  # Until we have our own icon
+APP_ICON = 'dups'
 
 DBUS_NAME = 'de.linuxwhatelse.dups.daemon'
 DBUS_PATH = '/de/linuxwhatelse/dups'
