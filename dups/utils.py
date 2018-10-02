@@ -234,7 +234,7 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None):
 
     for dt in datetimes:
         # Most recent "n" days
-        if dt > start - datetime.timedelta(days=7) and len(daily) < days:
+        if dt > start - datetime.timedelta(days=days) and len(daily) < days:
             daily.append(dt)
             continue
 
