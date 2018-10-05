@@ -16,3 +16,10 @@ class BackupAlreadyExistsException(Exception):
         if not message:
             message = 'This backup already exists!'
         super().__init__(message)
+
+
+class InvalidUserException(Exception):
+    def __init__(self, message=None):
+        if not message:
+            message = 'Invalid user!'
+        super().__init__(message)

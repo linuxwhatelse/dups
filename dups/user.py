@@ -4,6 +4,8 @@ import os
 import pwd
 from typing import TypeVar
 
+from dups import exceptions
+
 _USER = TypeVar('_USER', bound='User')
 
 
@@ -17,7 +19,8 @@ class User(object):
                 self.__user = user
 
             except KeyError:
-                raise ValueError('User "{}" is invalid.'.format(user))
+                raise exceptions.InvalidUserException(
+                    'User "{}" is invalid.'.format(user))
 
     @property
     def user(self):

@@ -3,6 +3,7 @@ import getpass
 import logging
 import re
 import sys
+import traceback
 
 from . import const, helper, user, utils
 
@@ -198,24 +199,7 @@ def get_arg_parser():
     return parsers
 
 
-def handle(callback, *args, **kwargs):
-    """Handle the given callback, print any errors and exit if necessary.
-
-    Args:
-        callback (function): The function to execute.
-        *args: Arguments to pass to the callback.
-        **kwargs: Keyword-Arguments to pass to the callback.
-    """
-    success, res = helper.error_handler(callback, *args, **kwargs)
-
-    if not success:
-        print(res)
-        sys.exit(1)
-
-    return res
-
-
-def handle_backup(args, usr):
+def do_backup(args, usr):
     """Handle the backup sub-command.
 
     Args:
@@ -226,14 +210,14 @@ def handle_backup(args, usr):
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
-    bak, status = handle(helper.create_backup, usr, args.dry_run, dbus_client)
+    status = helper.create_backup(usr, args.dry_run, dbus_client)
 
     if status:
-        print(status.message)
+        LOGGER.info(status.message)
         sys.exit(status.exit_code)
 
 
-def handle_modify(args, usr):
+def do_modify(args, usr):
     """Handle the modify sub-command.
 
     Args:
@@ -241,13 +225,13 @@ def handle_modify(args, usr):
         usr: (user.User): The user for which to perform this action.
     """
     if args.set_valid:
-        handle(helper.validate_backups, args.backup, True)
+        helper.validate_backups(args.backup, True)
 
     elif args.set_invalid:
-        handle(helper.validate_backups, args.backup, False)
+        helper.validate_backups(args.backup, False)
 
 
-def handle_restore(args, usr):
+def do_restore(args, usr):
     """Handle the restore sub-command.
 
     Args:
@@ -266,7 +250,8 @@ def handle_restore(args, usr):
                 helper.get_backups(io, include_invalid=False), reverse=True)
 
         if args.restore_nth > len(backups):
-            print('You do not have {} backups yet.'.format(args.restore_nth))
+            LOGGER.info('You do not have {} backups yet.'.format(
+                args.restore_nth))
             sys.exit(1)
 
         name = backups[args.restore_nth].name
@@ -275,14 +260,14 @@ def handle_restore(args, usr):
     if not args.yes and not utils.confirm(msg):
         sys.exit(1)
 
-    bak, status = handle(helper.restore_backup, usr, args.items, name,
-                         args.target, args.dry_run, dbus_client)
+    status = helper.restore_backup(usr, args.items, name, args.target,
+                                   args.dry_run, dbus_client)
     if status:
-        print(status.message)
+        LOGGER.info(status.message)
         sys.exit(status.exit_code)
 
 
-def handle_remove(args):
+def do_remove(args):
     """Handle the remove sub-command.
 
     Args:
@@ -295,28 +280,29 @@ def handle_remove(args):
             return
 
     if args.backup:
-        handle(helper.remove_backups, args.backup, args.dry_run)
+        helper.remove_backups(args.backup, args.dry_run)
 
     elif args.all_but_keep is not None:
-        handle(helper.remove_but_keep, args.all_but_keep, args.dry_run)
+        helper.remove_but_keep(args.all_but_keep, args.dry_run)
 
     elif args.older_than:
-        handle(helper.remove_older_than, args.older_than, args.dry_run)
+        helper.remove_older_than(args.older_than, args.dry_run)
 
     elif args.invalid:
-        handle(helper.remove_invalid, args.dry_run)
+        helper.remove_invalid(args.dry_run)
 
     elif args.gffs:
         match = re.search('([0-9]+)d([0-9]+)w([0-9]+)m([0-9]+)y', args.gffs)
         if not match:
-            return 'Invalid gffs pattern.'
+            LOGGER.error('Invalid gffs pattern.')
+            sys.exit(1)
 
         days, weeks, months, years = match.groups()
-        handle(helper.remove_gffs, int(days), int(weeks), int(months),
-               int(years), args.dry_run)
+        helper.remove_gffs(
+            int(days), int(weeks), int(months), int(years), args.dry_run)
 
 
-def handle_daemon(usr, system=False):
+def do_daemon(usr, system=False):
     """Handle starting a daemon and exit if necessary.
 
     Args:
@@ -328,11 +314,11 @@ def handle_daemon(usr, system=False):
         daemon.Daemon.run(usr, system)
 
     except dbus.exceptions.DBusException:
-        print('The system daemon requires root privileges.')
+        LOGGER.error('The system daemon requires root privileges.')
         sys.exit(1)
 
 
-def handle_items(cfg, args):
+def do_items(cfg, args):
     """Handle the include/exclude sub-command."""
     if args.command in ['include', 'i']:
         add = cfg.add_includes
@@ -360,7 +346,7 @@ def handle_items(cfg, args):
             del items['patterns']
 
         items = [item for elem in items.values() for item in elem]
-        print('\n'.join(sorted(items)))
+        LOGGER.info('\n'.join(sorted(items)))
 
     else:
         add(args.items)
@@ -387,22 +373,17 @@ def is_dbus_required(args):
     return False
 
 
-def main():  # noqa: C901
+def _main():  # noqa: C901
     """Entrypoint for dups."""
     parsers = get_arg_parser()
     args = parsers['main'].parse_args()
 
     if is_dbus_required(args) and dbus is None:
-        print('To use any of the daemon functionality, "dbus-python" '
-              'is required.')
+        LOGGER.error('To use any of the daemon functionality, "dbus-python" '
+                     'is required.')
         sys.exit(1)
 
-    try:
-        usr = user.User(args.user)
-    except ValueError as e:
-        print(e)
-        sys.exit(1)
-
+    usr = user.User(args.user)
     helper.prepare_env(usr)
 
     cfg = helper.prepare_config(args.config, usr)
@@ -415,26 +396,24 @@ def main():  # noqa: C901
     LOGGER.debug('Using config: %s', cfg.config_file)
 
     if args.command in ['list', 'l']:
-        handle(helper.print_backups, not args.no_valid, not args.no_invalid)
+        helper.print_backups(not args.no_valid, not args.no_invalid)
 
     elif args.command in ['info', 'I']:
-        handle(helper.print_backup_info, args.backup)
+        helper.print_backup_info(args.backup)
 
     elif args.command in ['backup', 'b']:
-        handle_backup(args, usr)
+        do_backup(args, usr)
 
     elif args.command in ['modify', 'm']:
         if not any((args.set_valid, args.set_invalid)):
             parsers['modify'].error('Missing at least one argument.')
-        handle_modify(args, usr)
+        do_modify(args, usr)
 
     elif args.command in ['restore', 'r']:
-        handle_restore(args, usr)
+        do_restore(args, usr)
 
     elif args.command in ['remove', 'rm']:
-        msg = handle_remove(args)
-        if msg:
-            parsers[args.command].error(msg)
+        do_remove(args)
 
     elif args.command in ['log']:
         if not any((args.backup, args.restore)):
@@ -444,9 +423,20 @@ def main():  # noqa: C901
     elif args.command in ['include', 'i', 'exclude', 'e']:
         if not any((args.items, args.list)):
             parsers[args.command].error('Missing items and/or arguments.')
-        handle_items(cfg, args)
+        do_items(cfg, args)
 
     elif args.command in ['daemon', 'd']:
         if not any((args.session, args.system)):
             parsers['daemon'].error('Missing at least one argument.')
-        handle_daemon(usr, args.system)
+        do_daemon(usr, args.system)
+
+
+def main():
+    success, res, err = helper.error_handler(_main)
+
+    if not success:
+        LOGGER.debug(traceback.format_exc())
+        LOGGER.error(res)
+        sys.exit(1)
+
+    return res
