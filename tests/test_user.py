@@ -1,6 +1,6 @@
 import context  # noqa: F401, isort:skip
 
-from dups import user
+from dups import exceptions, user
 
 import pytest
 
@@ -19,5 +19,5 @@ class Test_User:
         assert usr.xdg_runtime_dir == '/run/user/0'
 
     def test_invalid(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.InvalidUserException):
             user.User('__invalid__')
