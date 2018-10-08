@@ -4,6 +4,7 @@ import os
 import shlex
 import socket
 import sys
+import traceback
 from contextlib import contextmanager
 from typing import Tuple
 
@@ -125,17 +126,19 @@ def error_handler(callback, *args, **kwargs):
         **kargs: Keyword-Arguments to pass to the callback.
 
     Returns:
-        tuple: A 3-tuple consisting of:
-            0 (bool): If called successfully
-            1 (str|...): Simple error message on error or the callbacks result.
-            2 (Exception): The raised exception on error or `None`.
+        tuple: A 4-tuple consisting of:
+            0 (...): The callbacks result or `None` on error.
+            1 (str): User presentable error message on error otherwise `None`
+            2 (Exception): The raised exception on error otherwise `None`.
+            3 (str): Traceback information on error otherwise `None`.
     """
     error_msg = None
     exception = None
+    tb = None
 
     try:
         res = callback(*args, **kwargs)
-        return (True, res, None)
+        return (res, None, None, None)
 
     except (exceptions.BackupAlreadyExistsException,
             exceptions.BackupNotFoundException,
@@ -143,31 +146,37 @@ def error_handler(callback, *args, **kwargs):
             paramiko.ssh_exception.NoValidConnectionsError,
             paramiko.ssh_exception.SSHException) as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = str(err)
 
     except paramiko.ssh_exception.BadHostKeyException as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = 'Host key verification failed.'
 
     except (KeyError, socket.gaierror) as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = 'Could not connect to host.'
 
     except DBusException as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = 'Unable to connect to daemon. Is one running?'
 
     except KeyboardInterrupt as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = 'Process cancelled.'
 
     except Exception as err:
         exception = err
+        tb = traceback.format_exc()
         error_msg = 'Something bad happened. Try increasing the log-level.'
         error_msg += '\n'
         error_msg += str(err)
 
-    return (False, error_msg, exception)
+    return (None, error_msg, exception, tb)
 
 
 def notify(title, body=None, priority=None, icon=const.APP_ICON):

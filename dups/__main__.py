@@ -210,9 +210,14 @@ def do_backup(args, usr):
     if args.background or args.system_background:
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
-    status = helper.create_backup(usr, args.dry_run, dbus_client)
+    if not dbus_client:
+        helper.notify('Starting backup')
 
-    if status:
+    status, err_msg, ex, tb = helper.error_handler(helper.create_backup, usr,
+                                                   args.dry_run, dbus_client)
+
+    if not dbus_client and status:
+        helper.notify('Finished backup', status.message)
         LOGGER.info(status.message)
         sys.exit(status.exit_code)
 
@@ -260,9 +265,15 @@ def do_restore(args, usr):
     if not args.yes and not utils.confirm(msg):
         sys.exit(1)
 
-    status = helper.restore_backup(usr, args.items, name, args.target,
-                                   args.dry_run, dbus_client)
-    if status:
+    if not dbus_client:
+        helper.notify('Starting restore')
+
+    status, err_msg, ex, tb = helper.error_handler(
+        helper.restore_backup, usr, args.items, name, args.target,
+        args.dry_run, dbus_client)
+
+    if not dbus_client and status:
+        helper.notify('Finished restore', status.message)
         LOGGER.info(status.message)
         sys.exit(status.exit_code)
 
@@ -432,11 +443,11 @@ def _main():  # noqa: C901
 
 
 def main():
-    success, res, err = helper.error_handler(_main)
+    res, err_msg, ex, tb = helper.error_handler(_main)
 
-    if not success:
-        LOGGER.debug(traceback.format_exc())
-        LOGGER.error(res)
+    if err_msg:
+        LOGGER.debug(tb)
+        LOGGER.error(err_msg)
         sys.exit(1)
 
     return res

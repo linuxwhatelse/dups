@@ -94,6 +94,9 @@ def notify(app_id, title, body=None, priority=None, icon=None):
     if Gio is None:
         raise RuntimeError('"pygobject" required but not available.')
 
+    if body is None:
+        body = ''
+
     app = Gio.Application.new(app_id, Gio.ApplicationFlags.FLAGS_NONE)
     app.register()
 

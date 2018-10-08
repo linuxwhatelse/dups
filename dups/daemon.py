@@ -104,20 +104,23 @@ class Daemon(dbus.service.Object):
         """
         dry_run = bool(dry_run)
 
-        def _backup():
+        def __backup():
             config.Config.get().reload()
 
-            self._notify('Starting new backup')
-            success, res, err = helper.error_handler(helper.create_backup,
-                                                     self.usr, dry_run)
+            self._notify('Starting backup')
+            status, err_msg, ex, tb = helper.error_handler(
+                helper.create_backup, self.usr, dry_run)
 
-            if success:
-                self._notify('Finished backup', res.message)
+            if status:
+                self._notify('Finished backup', status.message)
+                LOGGER.info(status.message)
             else:
-                self._notify('Could not start backup', res,
+                self._notify('Could not start backup', err_msg,
                              utils.NPriority.URGENT)
+                LOGGER.debug(tb)
+                LOGGER.error(err_msg)
 
-        threading.Thread(target=_backup).start()
+        threading.Thread(target=__backup).start()
 
     @dbus.service.method(const.DBUS_NAME, in_signature='asssb')
     def restore(self, items, name, target, dry_run):
@@ -134,20 +137,24 @@ class Daemon(dbus.service.Object):
         items = list(str(i) for i in items)
         dry_run = bool(dry_run)
 
-        def _restore():
+        def __restore():
             config.Config.get().reload()
 
             self._notify('Starting restore')
-            success, res, err = helper.error_handler(
+
+            status, err_msg, ex, tb = helper.error_handler(
                 helper.restore_backup, self.usr, items, name, target, dry_run)
 
-            if success:
-                self._notify('Finished restore', res.message)
+            if status:
+                self._notify('Finished restore', status.message)
+                LOGGER.info(status.message)
             else:
-                self._notify('Could not start backup', res,
+                self._notify('Could not start restore', err_msg,
                              utils.NPriority.URGENT)
+                LOGGER.debug(tb)
+                LOGGER.error(err_msg)
 
-        threading.Thread(target=_restore).start()
+        threading.Thread(target=__restore).start()
 
 
 class Client(object):
