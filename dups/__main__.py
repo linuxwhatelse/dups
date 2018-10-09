@@ -39,7 +39,7 @@ def get_arg_parser():
                                  help='Use this config file instead.')
 
     subparser = parsers['main'].add_subparsers(
-        title='Commands', dest='command', metavar='<command>', required=True)
+        title='Commands', dest='command', metavar='<command>')
 
     # --- Create backups ---
     parsers['backup'] = subparser.add_parser('backup', aliases=['b'],
