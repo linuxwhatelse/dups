@@ -357,7 +357,7 @@ def do_items(cfg, args):
             del items['patterns']
 
         items = [item for elem in items.values() for item in elem]
-        LOGGER.info('\n'.join(sorted(items)))
+        print('\n'.join(sorted(items)))
 
     else:
         add(args.items)
