@@ -91,11 +91,7 @@ their package-manager.
 
 
 ## Contributing
-A contribution guide does not yet exists.  
-  
-Just ensure the code quality is up to par (or better) with the existing one
-and unit-test don't fail.  
-New features should also be properly unittested.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 
 ## Authors
