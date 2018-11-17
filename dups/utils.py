@@ -210,7 +210,8 @@ def bytes2human(n):
     return '{:.2f} {}'.format(n, symbols[0])
 
 
-def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None):
+def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None,
+                weekday_full=6):
     """Rotate the given datetimes based on the Grandfather-father-son
     rotation-scheme.
 
@@ -220,6 +221,12 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None):
         weeks (int): Amount of weeks per month to keep.
         months (int): Amount of months per year to keep.
         years (int): Amount of years to keep.
+        start (datetime): Starting point for applying the rotation within the
+            given `datetimes`_.
+            Defaults to the first reverse sorted match of `datetimes`_.
+        weekday_full (int): Which backup of the week should be consider as
+            "full" backup, where Monday is 0 and Sunday is 6.
+            Defaults to 6.
 
     Returns:
         tuple([list, ...]): 5-tuple
@@ -244,7 +251,7 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None):
         # Skip the current week and current month
         if dt.year + dt.isocalendar()[1] < start.year + start.isocalendar()[1]:
             # Most recent "n" weeks
-            if dt.weekday() == 6 and len(weekly) < weeks:
+            if dt.weekday() == weekday_full and len(weekly) < weeks:
                 weekly.append(dt)
                 continue
 

@@ -15,6 +15,11 @@ target:
 # Whether or not the daemon should post notifications.
 notify: True
 
+# Which backup of the week should be consider as "full" backup, where Monday
+# is 0 and Sunday is 6.
+# These are the ones which are being kept.
+gffs_weekday_full: 6
+
 rsync:
   # Where the rsync binary is located.
   rsync_bin: '/usr/bin/rsync'

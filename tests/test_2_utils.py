@@ -10,7 +10,52 @@ import pytest
 
 
 class Test_gffs:
-    def test_rotate_gffs(self):
+    def test_rotate_gffs_weekday_0(self):
+        start = datetime(2017, 12, 31)
+
+        datetimes = []
+        for i in range(1095):
+            datetimes.append(start - timedelta(days=i))
+
+        gffs = utils.rotate_gffs(datetimes, start=start, weekday_full=0)
+
+        assert gffs[0] == [
+            datetime(2017, 12, 31),
+            datetime(2017, 12, 30),
+            datetime(2017, 12, 29),
+            datetime(2017, 12, 28),
+            datetime(2017, 12, 27),
+            datetime(2017, 12, 26),
+            datetime(2017, 12, 25),
+        ]
+
+        assert gffs[1] == [
+            datetime(2017, 12, 18),
+            datetime(2017, 12, 11),
+            datetime(2017, 12, 4),
+            datetime(2017, 11, 27),
+        ]
+
+        assert gffs[2] == [
+            datetime(2017, 11, 30),
+            datetime(2017, 10, 31),
+            datetime(2017, 9, 30),
+            datetime(2017, 8, 31),
+            datetime(2017, 7, 31),
+            datetime(2017, 6, 30),
+            datetime(2017, 5, 31),
+            datetime(2017, 4, 30),
+            datetime(2017, 3, 31),
+            datetime(2017, 2, 28),
+            datetime(2017, 1, 31),
+            datetime(2016, 12, 31),
+        ]
+
+        assert gffs[3] == [
+            datetime(2015, 12, 31),
+        ]
+
+    def test_rotate_gffs_weekday_6(self):
         start = datetime(2017, 12, 31)
 
         datetimes = []
