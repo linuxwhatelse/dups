@@ -34,7 +34,7 @@ build: off
 services:
   - docker
 
-install:
+before_build:
   - sh: |
       docker build -f data/docker/Dockerfile.${DIST} \
         --pull --tag linuxwhatelse/dups-${DIST} .
