@@ -72,14 +72,14 @@ class Daemon(dbus.service.Object):
             print('Shutting down...')
             sys.exit(0)
 
-    def __notification_listener(self, title, body, priority, icon):
+    def __notification_listener(self, title, body, priority, icon, reason):
         title = str(title)
         body = str(body)
         priority = int(priority)
         icon = str(icon)
         LOGGER.debug('Received notification from backend: %s',
-                     (title, body, priority, icon))
-        self._notify(title, body, priority, icon)
+                     (title, body, priority, icon, reason))
+        self._notify(title, body, priority, icon, reason)
 
     @dbus.service.method(const.DBUS_NAME, in_signature='ssiss')
     def _notify(self, title, body='', priority=utils.NPriority.NORMAL,
