@@ -213,6 +213,11 @@ class Config:
         self.save()
 
     @property
+    def gffs_weekday_full(self):
+        """bool: The configured notify state."""
+        return self._combined['gffs_weekday_full']
+
+    @property
     def notify(self):
         """bool: The configured notify state."""
         return self._combined['notify']

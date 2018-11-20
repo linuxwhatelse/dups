@@ -497,9 +497,9 @@ def remove_gffs(days, weeks, months, years, dry_run=False):
     with configured_io() as io:
         backup_dates = list(b.datetime for b in get_backups(io))
 
-        keep_dates = utils.rotate_gffs(
-            backup_dates, days, weeks, months, years,
-            weekday_full=cfg['gffs_weekday_full'])[4]
+        keep_dates = utils.rotate_gffs(backup_dates, days, weeks, months,
+                                       years,
+                                       weekday_full=cfg.gffs_weekday_full)[4]
 
         remove_dates = [dt for dt in backup_dates if dt not in keep_dates]
         remove_names = list(
