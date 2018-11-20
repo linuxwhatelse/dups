@@ -23,6 +23,13 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+_NOTIFICATION_PRIO_MAP = {
+    'NONE': 99,
+    'LOW': utils.NPriority.LOW,
+    'NORMAL': utils.NPriority.NORMAL,
+    'HIGH': utils.NPriority.HIGH,
+}
+
 
 def configure_logger():
     """Configure the logger based on the config file."""
@@ -116,6 +123,24 @@ def configured_io():
             io.close()
 
 
+def get_rsync_notification_priority(status):
+    """Get a apropriate notification priority for the given rsync status.
+    
+    Args:
+        status (rsync.Status): A rsync status.
+    
+    Returns:
+        utils.NPriority: Notification priority appropriate for the given
+            status.
+    """
+    if status.exit_code == 0:
+        return utils.NPriority.NORMAL
+    elif status.exit_code in (23, 24):
+        return utils.NPriority.URGENT
+    else:
+        return utils.NPriority.HIGH
+
+
 def error_handler(callback, *args, **kwargs):
     """Handle the given callback and catch all exceptions if some should
        arise.
@@ -179,7 +204,8 @@ def error_handler(callback, *args, **kwargs):
     return (None, error_msg, exception, tb)
 
 
-def notify(title, body=None, priority=None, icon=const.APP_ICON):
+def notify(title, body=None, priority=utils.NPriority.NORMAL,
+           icon=const.APP_ICON, is_daemon=False, reason='other'):
     """Send a new notification to a notification daemon unless configured
        otherwise by the user.
 
@@ -188,10 +214,20 @@ def notify(title, body=None, priority=None, icon=const.APP_ICON):
         body (str): The notifications body.
         priority (utils.NPriority): The notifications priority level.
         icon (str): Name or path of the notifications icon.
+        is_daemon (bool): If this notification originated from a daemon
+            process.
+        reason (str): Reason for this notification. Used to determine whether
+            or not to post the notification based on the users config.
+            Can be one of "backup", "restore" or "other".
+            Defaults to "other".
     """
     cfg = config.Config.get()
 
-    if not cfg.notify:
+    if cfg.notify['daemon_only'] and not is_daemon:
+        return
+
+    max_prio = cfg.notify.get(reason.upper(), 'NORMAL') 
+    if _NOTIFICATION_PRIO_MAP[max_prio] > priority:
         return
 
     try:

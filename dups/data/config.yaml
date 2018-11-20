@@ -12,8 +12,16 @@ target:
   #   HostName, User, Port and IdentityFile
   ssh_config_file: ~/.ssh/config
 
-# Whether or not the daemon should post notifications.
-notify: True
+# If notifications should be posted and if so, when.
+notify:
+  # Only post notifications posted by the daemon
+  daemon_only: True
+  # For backup, only post notifications with the given priority or higher
+  # Possible options are: NONE, LOW, NORMAL, HIGH
+  backup: NORMAL
+  # For restore, only post notifications with the given priority or higher
+  # Possible options are: NONE, LOW, NORMAL, HIGH
+  restore: NORMAL
 
 # Which backup of the week should be consider as "full" backup, where Monday
 # is 0 and Sunday is 6.

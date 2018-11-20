@@ -81,17 +81,17 @@ class Daemon(dbus.service.Object):
                      (title, body, priority, icon))
         self._notify(title, body, priority, icon)
 
-    @dbus.service.method(const.DBUS_NAME, in_signature='ssis')
+    @dbus.service.method(const.DBUS_NAME, in_signature='ssiss')
     def _notify(self, title, body='', priority=utils.NPriority.NORMAL,
-                icon=const.APP_ICON):
+                icon=const.APP_ICON, reason='other'):
         if not self.system:
-            helper.notify(title, body, priority, icon)
+            helper.notify(title, body, priority, icon, True, reason)
             return
 
         LOGGER.debug('Forwarding notification to user-session: %s', self.path)
         message = dbus.lowlevel.SignalMessage(self.path, const.DBUS_NAME,
                                               Daemon.NOTIFY_SIGNAL)
-        message.append(title, body, priority, icon)
+        message.append(title, body, priority, icon, reason)
         self.bus.send_message(message)
 
     @dbus.service.method(const.DBUS_NAME, in_signature='b')
@@ -107,16 +107,18 @@ class Daemon(dbus.service.Object):
         def __backup():
             config.Config.get().reload()
 
-            self._notify('Starting backup')
+            self._notify('Starting backup', reason='backup')
             status, err_msg, ex, tb = helper.error_handler(
                 helper.create_backup, self.usr, dry_run)
 
             if status:
-                self._notify('Finished backup', status.message)
+                priority = helper.get_rsync_notification_priority(status)
+                self._notify('Finished backup', status.message, priority,
+                             reason='backup')
                 LOGGER.info(status.message)
             else:
                 self._notify('Could not start backup', err_msg,
-                             utils.NPriority.URGENT)
+                             utils.NPriority.HIGH, reason='backup')
                 LOGGER.debug(tb)
                 LOGGER.error(err_msg)
 
@@ -140,19 +142,21 @@ class Daemon(dbus.service.Object):
         def __restore():
             config.Config.get().reload()
 
-            self._notify('Starting restore')
+            self._notify('Starting restore', reason='restore')
 
             status, err_msg, ex, tb = helper.error_handler(
                 helper.restore_backup, self.usr, items, name, target, dry_run)
 
             if status:
-                self._notify('Finished restore', status.message)
+                priority = helper.get_rsync_notification_priority(status)
                 LOGGER.info(status.message)
+                self._notify('Finished restore', status.message, priority,
+                             reason='restore')
             else:
-                self._notify('Could not start restore', err_msg,
-                             utils.NPriority.URGENT)
                 LOGGER.debug(tb)
                 LOGGER.error(err_msg)
+                self._notify('Could not start restore', err_msg,
+                             utils.NPriority.HIGH, reason='restore')
 
         threading.Thread(target=__restore).start()
 

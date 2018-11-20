@@ -23,7 +23,7 @@ except ImportError:
 
 
 class NPriority:
-    NORMAL, LOW, HIGH, URGENT = 0, 1, 2, 3
+    LOW, NORMAL, HIGH = (1, 2, 3)
 
 
 def confirm(msg, default_yes=False):
@@ -77,7 +77,7 @@ def add_logging_handler(file_name, usr):
         logging.getLogger(name).addHandler(handler)
 
 
-def notify(app_id, title, body=None, priority=None, icon=None):
+def notify(app_id, title, body=None, priority=NPriority.NORMAL, icon=None):
     """Send a new notification to a notification daemon.
 
     Args:
@@ -86,6 +86,7 @@ def notify(app_id, title, body=None, priority=None, icon=None):
         title (str): The notifications title.
         body (str): The notifications body.
         priority (NPriority): The notifications priority level.
+            Defaults to `NPriority.NORMAL`
         icon (str): Name or path of the notifications icon.
 
     Raises:
@@ -103,8 +104,7 @@ def notify(app_id, title, body=None, priority=None, icon=None):
     notification = Gio.Notification.new(title)
     notification.set_body(body)
 
-    if priority:
-        notification.set_priority(priority)
+    notification.set_priority(priority)
 
     if icon:
         notification.set_icon(Gio.ThemedIcon.new(icon))

@@ -211,15 +211,24 @@ def do_backup(args, usr):
         dbus_client = daemon.Client(getpass.getuser(), args.system_background)
 
     if not dbus_client:
-        helper.notify('Starting backup')
+        helper.notify('Starting backup', reason='backup')
 
     status, err_msg, ex, tb = helper.error_handler(helper.create_backup, usr,
                                                    args.dry_run, dbus_client)
+    if dbus_client:
+        return
 
-    if not dbus_client and status:
-        helper.notify('Finished backup', status.message)
+    if status:
+        priority = helper.get_rsync_notification_priority(status)
+        helper.notify('Finished backup', status.message, priority,
+                      reason='backup')
         LOGGER.info(status.message)
         sys.exit(status.exit_code)
+    else:
+        LOGGER.debug(tb)
+        LOGGER.error(err_msg)
+        helper.notify('Finished backup', err_msg, utils.NPriority.HIGH,
+                      reason='backup')
 
 
 def do_modify(args, usr):
@@ -266,16 +275,26 @@ def do_restore(args, usr):
         sys.exit(1)
 
     if not dbus_client:
-        helper.notify('Starting restore')
+        helper.notify('Starting restore', reason='restore')
 
     status, err_msg, ex, tb = helper.error_handler(
         helper.restore_backup, usr, args.items, name, args.target,
         args.dry_run, dbus_client)
 
-    if not dbus_client and status:
-        helper.notify('Finished restore', status.message)
+    if dbus_client:
+        return
+
+    if status:
+        priority = helper.get_rsync_notification_priority(status)
+        helper.notify('Finished restore', status.message, priority,
+                      reason='restore')
         LOGGER.info(status.message)
         sys.exit(status.exit_code)
+    else:
+        LOGGER.debug(tb)
+        LOGGER.error(err_msg)
+        helper.notify('Finished restore', err_msg, utils.NPriority.HIGH,
+                      reason='restore')
 
 
 def do_remove(args):

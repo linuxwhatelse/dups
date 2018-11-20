@@ -1,3 +1,4 @@
+import logging
 import os
 import threading
 from typing import TypeVar
@@ -5,6 +6,8 @@ from typing import TypeVar
 import ruamel.yaml
 
 from . import const, utils
+
+LOGGER = logging.getLogger(__name__)
 
 _CONFIG = TypeVar('_CONFIG', bound='Config')
 

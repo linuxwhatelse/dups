@@ -323,7 +323,7 @@ class Backup(object):
             if self.info.get('size', None) is None:
                 self.calculate_size()
 
-            if status.is_complete:
+            if status.exit_code == 0:
                 self.set_valid(True)
 
         return status
