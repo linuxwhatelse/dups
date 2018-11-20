@@ -219,7 +219,8 @@ def do_backup(args, usr):
         return
 
     if status:
-        priority = helper.get_rsync_notification_priority(status)
+        priority = (utils.NPriority.NORMAL
+                    if status.exit_code == 0 else utils.NPriority.HIGH)
         helper.notify('Finished backup', status.message, priority,
                       reason='backup')
         LOGGER.info(status.message)
@@ -285,7 +286,8 @@ def do_restore(args, usr):
         return
 
     if status:
-        priority = helper.get_rsync_notification_priority(status)
+        priority = (utils.NPriority.NORMAL
+                    if status.exit_code == 0 else utils.NPriority.HIGH)
         helper.notify('Finished restore', status.message, priority,
                       reason='restore')
         LOGGER.info(status.message)

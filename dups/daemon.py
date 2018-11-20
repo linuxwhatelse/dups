@@ -112,7 +112,8 @@ class Daemon(dbus.service.Object):
                 helper.create_backup, self.usr, dry_run)
 
             if status:
-                priority = helper.get_rsync_notification_priority(status)
+                priority = (utils.NPriority.NORMAL
+                            if status.exit_code == 0 else utils.NPriority.HIGH)
                 self._notify('Finished backup', status.message, priority,
                              reason='backup')
                 LOGGER.info(status.message)
@@ -148,7 +149,8 @@ class Daemon(dbus.service.Object):
                 helper.restore_backup, self.usr, items, name, target, dry_run)
 
             if status:
-                priority = helper.get_rsync_notification_priority(status)
+                priority = (utils.NPriority.NORMAL
+                            if status.exit_code == 0 else utils.NPriority.HIGH)
                 LOGGER.info(status.message)
                 self._notify('Finished restore', status.message, priority,
                              reason='restore')

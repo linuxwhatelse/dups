@@ -123,24 +123,6 @@ def configured_io():
             io.close()
 
 
-def get_rsync_notification_priority(status):
-    """Get a apropriate notification priority for the given rsync status.
-    
-    Args:
-        status (rsync.Status): A rsync status.
-    
-    Returns:
-        utils.NPriority: Notification priority appropriate for the given
-            status.
-    """
-    if status.exit_code == 0:
-        return utils.NPriority.NORMAL
-    elif status.exit_code in (23, 24):
-        return utils.NPriority.URGENT
-    else:
-        return utils.NPriority.HIGH
-
-
 def error_handler(callback, *args, **kwargs):
     """Handle the given callback and catch all exceptions if some should
        arise.
@@ -226,7 +208,7 @@ def notify(title, body=None, priority=utils.NPriority.NORMAL,
     if cfg.notify['daemon_only'] and not is_daemon:
         return
 
-    max_prio = cfg.notify.get(reason.upper(), 'NORMAL') 
+    max_prio = cfg.notify.get(reason.upper(), 'NORMAL')
     if _NOTIFICATION_PRIO_MAP[max_prio] > priority:
         return
 
