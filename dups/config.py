@@ -212,22 +212,7 @@ class Config:
         self._remove_list_data('excludes', values)
         self.save()
 
-    @property
-    def notify(self):
-        """bool: The configured notify state."""
-        return self._combined['notify']
+    def __getattr__(self, name):
+        """Returns the requested config entry if it exists."""
+        return self._combined[name]
 
-    @property
-    def gffs(self):
-        """dict: The configured gffs options."""
-        return self._combined['gffs']
-
-    @property
-    def rsync(self):
-        """dict: The configured rsync options."""
-        return self._combined['rsync']
-
-    @property
-    def logging(self):
-        """dict: The configured logging options."""
-        return self._combined['logging']
