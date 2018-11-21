@@ -481,14 +481,11 @@ def remove_invalid(dry_run=False):
     remove_backups(names, dry_run)
 
 
-def remove_gffs(days, weeks, months, years, dry_run=False):
-    """Remove backups based on the grandfather-father-son rotation scheme.
+def remove_gffs(dry_run=False):
+    """Remove backups based on the grandfather-father-son rotation scheme as
+       configured by the user.
 
     Args:
-        days (int): Amount of days per week to keep.
-        weeks (int): Amount of weeks per month to keep.
-        months (int): Amount of months per year to keep.
-        years (int): Amount of years to keep.
         dry_run (bool): Whether or not to perform a trial run with no
             changes made.
     """
@@ -496,10 +493,14 @@ def remove_gffs(days, weeks, months, years, dry_run=False):
 
     with configured_io() as io:
         backup_dates = list(b.datetime for b in get_backups(io))
+        if not backup_dates:
+            LOGGER.info('No backup(s) to be removed.')
+            return
 
-        keep_dates = utils.rotate_gffs(backup_dates, days, weeks, months,
-                                       years,
-                                       weekday_full=cfg.gffs_weekday_full)[4]
+        keep_dates = utils.rotate_gffs(
+            backup_dates, cfg.gffs['days'], cfg.gffs['weeks'],
+            cfg.gffs['months'], cfg.gffs['years'],
+            weekday_full=cfg.gffs['weekday_full'])[4]
 
         remove_dates = [dt for dt in backup_dates if dt not in keep_dates]
         remove_names = list(

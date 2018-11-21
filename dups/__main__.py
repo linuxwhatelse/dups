@@ -1,9 +1,7 @@
 import argparse
 import getpass
 import logging
-import re
 import sys
-import traceback
 
 from . import const, helper, user, utils
 
@@ -114,14 +112,8 @@ def get_arg_parser():
         'can be one of "s" Seconds, "m" Minutes, "h" Hours, "d" Days or '
         '"w" Weeks. e.g "1w" would refer to "1 week".')
     parsers['remove'].add_argument(
-        '--gffs', nargs='?', type=str, const=const.GFFS_PATTERN,
-        help='Remove backups based on the grandfather-father-son '
-        'rotation scheme. The value consists of multiple "amount" and '
-        '"identifier". The identifier can be one of "d" Days, "w" Weeks, "m" '
-        'Months or "y" Years. e.g. 7d4w12m3y would refer to '
-        '"7 days, 4 weeks, 12 months, 3 years. Defaults to "{}". '
-        'THIS IS STILL EXPERIMENTAL. USE AT YOUR OWN RISK!'.format(
-            const.GFFS_PATTERN))
+        '--gffs', action='store_true', help=
+        'Remove backups based on the Grandfather-father-son rotation scheme.')
     parsers['remove'].add_argument('--invalid', action='store_true',
                                    help='Remove all invalid backups.')
 
@@ -324,14 +316,7 @@ def do_remove(args):
         helper.remove_invalid(args.dry_run)
 
     elif args.gffs:
-        match = re.search('([0-9]+)d([0-9]+)w([0-9]+)m([0-9]+)y', args.gffs)
-        if not match:
-            LOGGER.error('Invalid gffs pattern.')
-            sys.exit(1)
-
-        days, weeks, months, years = match.groups()
-        helper.remove_gffs(
-            int(days), int(weeks), int(months), int(years), args.dry_run)
+        helper.remove_gffs(args.dry_run)
 
 
 def do_daemon(usr, system=False):

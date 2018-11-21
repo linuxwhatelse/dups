@@ -3,7 +3,7 @@ target:
   path: '~/.local/share/dups'
 
   # Either a FQDN or hostname as defined in your ssh config.
-  # Leave for local backup.
+  # Leave empty for local backup.
   host:
 
   # Path to a ssh config file.
@@ -12,21 +12,26 @@ target:
   #   HostName, User, Port and IdentityFile
   ssh_config_file: ~/.ssh/config
 
-# If notifications should be posted and if so, when.
-notify:
-  # Only post notifications posted by the daemon
-  daemon_only: True
-  # For backup, only post notifications with the given priority or higher
-  # Possible options are: NONE, LOW, NORMAL, HIGH
-  backup: NORMAL
-  # For restore, only post notifications with the given priority or higher
-  # Possible options are: NONE, LOW, NORMAL, HIGH
-  restore: NORMAL
 
-# Which backup of the week should be consider as "full" backup, where Monday
-# is 0 and Sunday is 6.
-# These are the ones which are being kept.
-gffs_weekday_full: 6
+# Configuration for the Grandfather-father-son rotation scheme
+gffs:
+  # Backup of the week to consider a "full" backup, where Monday is 0 and
+  # Sunday is 6.
+  # These are the ones which are being kept.
+  weekday_full: 6
+
+  # Amount of most recent days to keep
+  days: 7
+
+  # Amount of most recent weeks to keep
+  weeks: 4
+
+  # Amount of most recent months to keep
+  months: 12
+
+  # Amount of most recent years to keep
+  years: 5
+
 
 rsync:
   # Where the rsync binary is located.
@@ -48,16 +53,31 @@ rsync:
   # See the "log format" setting in the rsyncd.conf manpage.
   out_format: "%t %i %f %''b"
 
+
+# If desktop notifications should be posted and if so, when.
+notify:
+  # Only post notifications posted by the daemon
+  daemon_only: True
+  # For backup, only post notifications with the given priority or higher
+  # Possible options are: NONE, LOW, NORMAL, HIGH
+  backup: NORMAL
+  # For restore, only post notifications with the given priority or higher
+  # Possible options are: NONE, LOW, NORMAL, HIGH
+  restore: NORMAL
+
+
 # Loglevel for individual modules.
 # Valid options are: DEBUG, INFO, WARNING, ERROR
 logging:
   dups: INFO
   paramiko: 100
 
+
 includes:
   folders: []
   files: []
   patterns: []
+
 
 excludes:
   folders: []
