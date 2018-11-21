@@ -129,13 +129,13 @@ def get_arg_parser():
     for sp in [parsers['backup'], parsers['restore'], parsers['remove']]:
         if sp != parsers['remove']:
             sp.add_argument(
-                '--bg', '--background', dest='background', action='store_true',
-                help='Perform the given task on the session daemon.')
+                '-s', '--session', dest='session', action='store_true',
+                help='Perform this task on the session daemon.')
 
             sp.add_argument(
-                '--sbg', '--system-background', dest='system_background',
+                '-S', '--system', dest='system',
                 action='store_true',
-                help='Perform the given task on the system daemon.')
+                help='Perform this task on the system daemon.')
 
             sp.add_argument('--log', action='store_true',
                             help='Print the most recent log.')
@@ -183,9 +183,9 @@ def get_arg_parser():
 
     parsers['daemon'] = subparser.add_parser('daemon', aliases=['d'],
                                              help='Start a daemon instance.')
-    parsers['daemon'].add_argument('--session', action='store_true',
+    parsers['daemon'].add_argument('-s', '--session', action='store_true',
                                    help='Start a user daemon.')
-    parsers['daemon'].add_argument('--system', action='store_true',
+    parsers['daemon'].add_argument('-S', '--system', action='store_true',
                                    help='Start a system daemon.')
 
     return parsers
@@ -199,8 +199,8 @@ def do_backup(args, usr):
         usr: (user.User): The user for which to perform this action.
     """
     dbus_client = None
-    if args.background or args.system_background:
-        dbus_client = daemon.Client(getpass.getuser(), args.system_background)
+    if args.session or args.system:
+        dbus_client = daemon.Client(getpass.getuser(), args.system)
 
     if not dbus_client:
         helper.notify('Starting backup', reason='backup')
@@ -246,8 +246,8 @@ def do_restore(args, usr):
         usr: (user.User): The user for which to perform this action.
     """
     dbus_client = None
-    if args.background or args.system_background:
-        dbus_client = daemon.Client(getpass.getuser(), args.system_background)
+    if args.session or args.system:
+        dbus_client = daemon.Client(getpass.getuser(), args.system)
 
     name = args.restore
 
@@ -381,10 +381,10 @@ def is_dbus_required(args):
     if args.command in ['daemon', 'd']:
         return True
 
-    if 'background' in args and args.background:
+    if 'session' in args and args.session:
         return True
 
-    if 'system_background' in args and args.system_background:
+    if 'system' in args and args.system:
         return True
 
     return False
