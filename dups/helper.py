@@ -262,7 +262,7 @@ def print_backups(include_valid=True, include_invalid=True):
     with configured_io() as io:
         backups = get_backups(io, include_valid, include_invalid)
 
-        print('Name', '\t\t', 'Date', '\t\t\t', 'Valid', '\t', 'Size')
+        print('Name', '\t\t', 'Date', '\t\t\t\t', 'Valid', '\t', 'Size')
         for b in backups:
             valid = 'yes' if b.is_valid else 'no'
 

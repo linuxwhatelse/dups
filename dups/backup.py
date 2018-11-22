@@ -25,7 +25,7 @@ class Backup(object):
     """
 
     NAME_FORMAT = '%Y%m%d%H%M%S'
-    PRETTY_FORMAT = '%d, %b %Y %H:%M:%S'
+    PRETTY_FORMAT = '%a %d, %b %Y - %H:%M:%S'
 
     _name = None
     _backup_root_dir = None

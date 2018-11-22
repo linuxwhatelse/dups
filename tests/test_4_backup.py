@@ -150,7 +150,7 @@ class Test_Backup:
                                           context.TARGET_DIR)
 
             assert bak.name == '19900101000000'
-            assert bak.name_pretty == '01, Jan 1990 00:00:00'
+            assert bak.name_pretty == 'Mon 01, Jan 1990 - 00:00:00'
             assert bak.datetime == datetime(1990, 1, 1, 0, 0, 0)
             assert bak.backup_root_dir == context.TARGET_DIR
             assert bak.backup_dir == os.path.join(context.TARGET_DIR,
