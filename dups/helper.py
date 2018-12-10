@@ -89,7 +89,7 @@ def configure_rsync(usr):
     sync.out_format = cfg.rsync['out_format']
 
 
-def get_configured_io():
+def get_configured_io() -> utils.IO:
     """Get a `io.IO`_ instance based on the users configuration.
        Better use `configured_io`_ to automatically close sessions.
 
@@ -103,7 +103,7 @@ def get_configured_io():
 
 
 @contextmanager
-def configured_io():
+def configured_io() -> utils.IO:
     """Contextmanager wrapper for `get_configured_io`_.
 
     Yields:
@@ -316,7 +316,7 @@ def create_backup(usr, dry_run=False,
         client.backup(dry_run)
         return None
 
-    utils.add_logging_handler('backup.log', usr)
+    logfile = utils.add_logging_handler('backup.log', usr)
     cfg = config.Config.get()
 
     includes = []
@@ -331,6 +331,11 @@ def create_backup(usr, dry_run=False,
     with configured_io() as io:
         bak = backup.Backup.new(io, cfg.target['path'])
         status = bak.backup(includes, cfg.get_excludes(True), dry_run)
+
+        if os.path.exists(logfile) and io.exists(bak.backup_dir):
+            dest = os.path.join(bak.backup_dir, 'backup.log')
+            with open(logfile) as src, io.open(dest, 'w+') as dst:
+                dst.write(src.read())
 
     return status
 

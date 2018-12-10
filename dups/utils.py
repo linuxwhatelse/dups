@@ -56,6 +56,11 @@ def add_logging_handler(file_name, usr):
 
     Args:
         file_name (str): The file name to write logs into.
+        usr (user.User): A user instance used to determin a appropriate
+            cache directory to store the logfile to.
+
+    Returns:
+        str: Full path to the file which will be written.
     """
     cfg = config.Config.get()
 
@@ -75,6 +80,8 @@ def add_logging_handler(file_name, usr):
 
     for name, level in cfg.logging.items():
         logging.getLogger(name).addHandler(handler)
+
+    return logfile
 
 
 def notify(app_id, title, body=None, priority=NPriority.NORMAL, icon=None):
