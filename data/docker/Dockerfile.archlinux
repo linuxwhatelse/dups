@@ -1,4 +1,4 @@
-FROM base/archlinux
+FROM archlinux/base
 
 # prep/test dependencies
 RUN pacman -Sy && pacman -S --noconfirm \
