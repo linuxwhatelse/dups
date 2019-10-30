@@ -21,7 +21,7 @@ environment:
       PKG_DIR: data/pkg/debian
       RELEASE_FILE: /builds/python3-dups-${DIST}.deb
 
-    - DIST: stretch
+    - DIST: buster
       PYTHON: python3
       PKG_DIR: data/pkg/debian
       RELEASE_FILE: /builds/python3-dups-${DIST}.deb
