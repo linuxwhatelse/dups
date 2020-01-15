@@ -4,100 +4,96 @@ import os
 import shutil
 from datetime import datetime, timedelta
 
-from dups import utils
-
 import pytest
+
+from dups import utils
 
 
 class Test_gffs:
-    def test_rotate_gffs_weekday_0(self):
-        start = datetime(2017, 12, 31)
-
-        datetimes = []
-        for i in range(1095):
-            datetimes.append(start - timedelta(days=i))
-
-        gffs = utils.rotate_gffs(datetimes, start=start, weekday_full=0)
-
-        assert gffs[0] == [
-            datetime(2017, 12, 31),
-            datetime(2017, 12, 30),
-            datetime(2017, 12, 29),
-            datetime(2017, 12, 28),
-            datetime(2017, 12, 27),
-            datetime(2017, 12, 26),
-            datetime(2017, 12, 25),
-        ]
-
-        assert gffs[1] == [
-            datetime(2017, 12, 18),
-            datetime(2017, 12, 11),
-            datetime(2017, 12, 4),
-            datetime(2017, 11, 27),
-        ]
-
-        assert gffs[2] == [
-            datetime(2017, 11, 30),
-            datetime(2017, 10, 31),
-            datetime(2017, 9, 30),
-            datetime(2017, 8, 31),
-            datetime(2017, 7, 31),
-            datetime(2017, 6, 30),
-            datetime(2017, 5, 31),
-            datetime(2017, 4, 30),
-            datetime(2017, 3, 31),
-            datetime(2017, 2, 28),
-            datetime(2017, 1, 31),
-            datetime(2016, 12, 31),
-        ]
-
-        assert gffs[3] == [
-            datetime(2015, 12, 31),
-        ]
-
     def test_rotate_gffs_weekday_6(self):
         start = datetime(2017, 12, 31)
 
         datetimes = []
-        for i in range(1095):
+        for i in range(365 * 6):
             datetimes.append(start - timedelta(days=i))
 
-        gffs = utils.rotate_gffs(datetimes, start=start)
+        gffs = utils.rotate_gffs(datetimes, days=7, weeks=4, months=12,
+                                 years=3, weekday_full=6)
 
-        assert gffs[0] == [
-            datetime(2017, 12, 31),
-            datetime(2017, 12, 30),
-            datetime(2017, 12, 29),
-            datetime(2017, 12, 28),
-            datetime(2017, 12, 27),
-            datetime(2017, 12, 26),
-            datetime(2017, 12, 25),
-        ]
-
-        assert gffs[1] == [
-            datetime(2017, 12, 24),
-            datetime(2017, 12, 17),
-            datetime(2017, 12, 10),
-            datetime(2017, 12, 3),
-        ]
-
-        assert gffs[2] == [
-            datetime(2017, 11, 30),
-            datetime(2017, 10, 31),
-            datetime(2017, 9, 30),
-            datetime(2017, 8, 31),
-            datetime(2017, 7, 31),
-            datetime(2017, 6, 30),
-            datetime(2017, 5, 31),
+        assert gffs[4] == [
+            # Years
+            datetime(2013, 12, 29),
+            datetime(2014, 12, 28),
+            datetime(2015, 12, 27),
+            # Months
+            datetime(2016, 12, 25),
+            datetime(2017, 1, 29),
+            datetime(2017, 2, 26),
+            datetime(2017, 3, 26),
             datetime(2017, 4, 30),
-            datetime(2017, 3, 31),
-            datetime(2017, 2, 28),
-            datetime(2017, 1, 31),
-            datetime(2016, 12, 31),
+            datetime(2017, 5, 28),
+            datetime(2017, 6, 25),
+            datetime(2017, 7, 30),
+            datetime(2017, 8, 27),
+            datetime(2017, 9, 24),
+            datetime(2017, 10, 29),
+            datetime(2017, 11, 26),
+            # Weeks
+            datetime(2017, 12, 3),
+            datetime(2017, 12, 10),
+            datetime(2017, 12, 17),
+            datetime(2017, 12, 24),
+            # Days
+            datetime(2017, 12, 25),
+            datetime(2017, 12, 26),
+            datetime(2017, 12, 27),
+            datetime(2017, 12, 28),
+            datetime(2017, 12, 29),
+            datetime(2017, 12, 30),
+            datetime(2017, 12, 31),
         ]
 
-        assert gffs[3] == [
-            datetime(2015, 12, 31),
+    def test_rotate_gffs_weekday_0(self):
+        start = datetime(2017, 12, 31)
+
+        datetimes = []
+        for i in range(365 * 7):
+            datetimes.append(start - timedelta(days=i))
+
+        gffs = utils.rotate_gffs(datetimes, days=7, weeks=4, months=12,
+                                 years=3, weekday_full=0)
+
+        assert gffs[4] == [
+            # Years
+            datetime(2013, 12, 30),
+            datetime(2014, 12, 29),
+            datetime(2015, 12, 28),
+            # Months
+            datetime(2016, 11, 28),
+            datetime(2016, 12, 26),
+            datetime(2017, 1, 30),
+            datetime(2017, 2, 27),
+            datetime(2017, 3, 27),
+            datetime(2017, 4, 24),
+            datetime(2017, 5, 29),
+            datetime(2017, 6, 26),
+            datetime(2017, 7, 31),
+            datetime(2017, 8, 28),
+            datetime(2017, 9, 25),
+            datetime(2017, 10, 30),
+            # Weeks
+            datetime(2017, 11, 27),
+            datetime(2017, 12, 4),
+            datetime(2017, 12, 11),
+            datetime(2017, 12, 18),
+            # Days
+            datetime(2017, 12, 25),
+            datetime(2017, 12, 26),
+            datetime(2017, 12, 27),
+            datetime(2017, 12, 28),
+            datetime(2017, 12, 29),
+            datetime(2017, 12, 30),
+            datetime(2017, 12, 31),
         ]
 
 
@@ -110,7 +106,7 @@ class Test_IO:
             os.remove(context.TMP_FILE)
 
     def get_io(self, target):
-        if target is 'local':
+        if target == 'local':
             return utils.IO.get()
         elif target == 'remote':
             return utils.IO.get(context.SSH_HOST)
@@ -120,9 +116,9 @@ class Test_IO:
     def test_is_local(self, target):
         io = self.get_io(target)
 
-        if target is 'local':
+        if target == 'local':
             assert io.is_local
-        elif target is 'remote':
+        elif target == 'remote':
             assert not io.is_local
 
         io.close()

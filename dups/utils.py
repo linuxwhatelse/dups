@@ -178,7 +178,6 @@ def duration_to_timedelta(duration):
 
 def validate_absolute(func):
     """Decorator which checks if the first argument is a absolute path."""
-
     @functools.wraps(func)
     def wrapper(*args):
         for arg in args:
@@ -239,6 +238,14 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None,
         tuple([list, ...]): 5-tuple
             ([daily], [weekly], [monthly], [yearly], [combined])
     """
+    def _last_weekday(year, month, weekday_full):
+        day = 0
+        for i in range(1, 3):
+            day = calendar.monthcalendar(year, month)[-i][weekday_full]
+            if day != 0:
+                break
+        return day
+
     datetimes = sorted(datetimes, reverse=True)
 
     if start is None:
@@ -263,13 +270,15 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None,
                 continue
 
             # Most recent "n" month
-            if (dt.day == calendar.monthrange(dt.year, dt.month)[1]
+            if (dt.day == _last_weekday(dt.year, dt.month, weekday_full)
                     and len(monthly) < months):
                 monthly.append(dt)
                 continue
 
         # Most recent "n" years
-        if (dt.month == 12 and dt.day == 31 and len(yearly) < years):
+        if (dt.month == 12
+                and dt.day == _last_weekday(dt.year, 12, weekday_full)
+                and len(yearly) < years):
             yearly.append(dt)
 
     combined = sorted([*daily, *weekly, *monthly, *yearly])
