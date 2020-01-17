@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.11
 
 ENV BACKUP_SCHEDULE='0 0 * * *' \
     BACKUP_COMMAND='dups backup' \
