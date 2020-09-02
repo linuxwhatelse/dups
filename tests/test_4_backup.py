@@ -30,7 +30,7 @@ class Test_Backup:
     def _io(self, target):
         io = None
         try:
-            if target is 'local':
+            if target == 'local':
                 io = utils.IO.get()
             elif target == 'remote':
                 io = utils.IO.get('localhost')
@@ -155,8 +155,9 @@ class Test_Backup:
             assert bak.backup_root_dir == context.TARGET_DIR
             assert bak.backup_dir == os.path.join(context.TARGET_DIR,
                                                   '19900101000000')
-            assert bak.backup_data_dir == os.path.join(
-                context.TARGET_DIR, '19900101000000', 'data')
+            assert bak.backup_data_dir == os.path.join(context.TARGET_DIR,
+                                                       '19900101000000',
+                                                       'data')
             assert bak.info_path == os.path.join(context.TARGET_DIR,
                                                  '19900101000000', '.info')
             assert bak.exists is True

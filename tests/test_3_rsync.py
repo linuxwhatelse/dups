@@ -5,7 +5,7 @@ import shlex
 import shutil
 from unittest.mock import patch
 
-from dups import const, rsync
+from dups import rsync
 
 import pytest
 import testutils
@@ -51,13 +51,13 @@ class Test_rsync:
     __start_dir = os.getcwd()
 
     def setup_method(self, method):
-        os.makedirs(context.TMP_DIR)
-        os.chdir(context.TMP_DIR)
+        os.makedirs(context.TARGET_DIR)
+        os.chdir(context.TARGET_DIR)
 
     def teardown_method(self, method):
         os.chdir(self.__start_dir)
-        if os.path.isdir(context.TMP_DIR):
-            shutil.rmtree(context.TMP_DIR)
+        if os.path.isdir(context.TARGET_DIR):
+            shutil.rmtree(context.TARGET_DIR)
 
     @patch('dups.rsync.rsync._exec')
     def test_options_original(self, mock_exec):
@@ -117,15 +117,14 @@ class Test_rsync:
         })
 
         sync = rsync.rsync()
-        sync.sync(
-            rsync.Path(context.TMP_DIR), [
-                'simple.file',
-                'simple folder',
-                'special * folder',
-                'not found * folder',
-                r'test\ \*\ folder/*.pattern',
-                r'''!"#$%&'()*+,-.012:;<=>?@ABC[\]^_`abc{|}~''',
-            ])
+        sync.sync(rsync.Path(context.TARGET_DIR), [
+            'simple.file',
+            'simple folder',
+            'special * folder',
+            'not found * folder',
+            r'test\ \*\ folder/*.pattern',
+            r'''!"#$%&'()*+,-.012:;<=>?@ABC[\]^_`abc{|}~''',
+        ])
 
         cmd = mock_exec.call_args[0][0]
         assert b'simple.file' in cmd
@@ -138,12 +137,11 @@ class Test_rsync:
     @patch('dups.rsync.rsync._exec')
     def test_excludes(self, mock_exec):
         sync = rsync.rsync()
-        sync.sync(
-            rsync.Path(context.TMP_DIR), ['/'], [
-                '/tmp',
-                'simple folder',
-                '*.mkv',
-            ])
+        sync.sync(rsync.Path(context.TARGET_DIR), ['/'], [
+            '/tmp',
+            'simple folder',
+            '*.mkv',
+        ])
 
         cmd = mock_exec.call_args[0][0]
         assert b"--exclude /tmp" in cmd
@@ -153,92 +151,9 @@ class Test_rsync:
     @patch('dups.rsync.rsync._exec')
     def test_link_dest(self, mock_exec):
         sync = rsync.rsync()
-        sync.sync(
-            rsync.Path('/'), [], link_dest='/special * path/previous_backup')
+        sync.sync(rsync.Path('/'), [],
+                  link_dest='/special * path/previous_backup')
 
         cmd = mock_exec.call_args[0][0]
         assert b'--delete' in cmd
         assert b"--link-dest '/special * path/previous_backup'" in cmd
-
-
-class Test_rsync_old:
-    @property
-    def data_dir_struct(self):
-        return testutils.get_dir_struct(context.DATA_DIR)
-
-    @property
-    def real_target(self):
-        return os.path.join(context.TMP_DIR, context.DATA_DIR.lstrip('/'))
-
-    def teardown_method(self, method):
-        if os.path.isdir(context.TMP_DIR):
-            shutil.rmtree(context.TMP_DIR)
-
-        if os.path.isfile(context.TMP_FILE):
-            os.remove(context.TMP_FILE)
-
-    def test_singleton(self):
-        sync1 = rsync.rsync.get()
-        sync2 = rsync.rsync.get()
-
-        assert sync1 == sync2
-
-        del sync2
-        sync2 = None
-
-        sync2 = rsync.rsync.get()
-        assert sync1 == sync2
-
-    def test_success(self):
-        sync = rsync.rsync()
-        sync.dry_run = False
-
-        target = rsync.Path(context.TMP_DIR)
-        status = sync.sync(target, [context.TEST_DIR])
-        assert status.exit_code == 0
-
-    def test_local_simple(self):
-        sync = rsync.rsync()
-        sync.dry_run = False
-
-        # Define the structure we expect after synchronizing
-        expected_data = self.data_dir_struct
-        del expected_data['test.dir']['dir2']
-
-        # Send the files
-        target = rsync.Path(context.TMP_DIR)
-        sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
-                  excludes=['**/dir2/.gitkeep'])
-
-        # Get and compare the structure of our sync target
-        synced_data = testutils.get_dir_struct(self.real_target)
-        assert expected_data == synced_data
-
-    def test_remote_simple(self):
-        sync = rsync.rsync()
-        sync.dry_run = False
-
-        # Define the structure we expect after synchronizing
-        expected_data = self.data_dir_struct
-        del expected_data['test.dir']['dir2']
-
-        # Send the files
-        target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
-        sync.sync(target, [context.TEST_DIR, context.TEST_FILE],
-                  excludes=['**/dir2/.gitkeep'])
-
-        # Get and compare the structure of our sync target
-        synced_data = testutils.get_dir_struct(self.real_target)
-        assert expected_data == synced_data
-
-    def test_ssh_wrapper(self):
-        sync = rsync.rsync()
-        sync.ssh_bin = '{} root {}'.format(const.SSH_WRAPPER_SCRIPT,
-                                           sync.ssh_bin)
-        sync.dry_run = False
-
-        # Send the files
-        target = rsync.Path(context.TMP_DIR, context.SSH_HOST)
-        status = sync.sync(target, [context.DATA_DIR])
-
-        assert status.exit_code == 0

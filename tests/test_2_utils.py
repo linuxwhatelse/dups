@@ -4,9 +4,9 @@ import os
 import shutil
 from datetime import datetime, timedelta
 
-import pytest
-
 from dups import utils
+
+import pytest
 
 
 class Test_gffs:
@@ -98,12 +98,16 @@ class Test_gffs:
 
 
 class Test_IO:
+    TMP_FILE = os.path.join(context.HERE, 'tmp.file')
+    TEST_FILE = os.path.join(context.DATA_DIR, 'test.file')
+    TEST_DIR = os.path.join(context.DATA_DIR, 'test.dir')
+
     def teardown_method(self, method):
         if os.path.exists(context.TMP_DIR):
             shutil.rmtree(context.TMP_DIR)
 
-        if os.path.exists(context.TMP_FILE):
-            os.remove(context.TMP_FILE)
+        if os.path.exists(Test_IO.TMP_FILE):
+            os.remove(Test_IO.TMP_FILE)
 
     def get_io(self, target):
         if target == 'local':
@@ -135,8 +139,8 @@ class Test_IO:
     def test_isfile(self, target):
         io = self.get_io(target)
 
-        assert not io.isfile(context.TEST_DIR)
-        assert io.isfile(context.TEST_FILE)
+        assert not io.isfile(Test_IO.TEST_DIR)
+        assert io.isfile(Test_IO.TEST_FILE)
 
         io.close()
 
@@ -144,8 +148,8 @@ class Test_IO:
     def test_isdir(self, target):
         io = self.get_io(target)
 
-        assert io.isdir(context.TEST_DIR)
-        assert not io.isdir(context.TEST_FILE)
+        assert io.isdir(Test_IO.TEST_DIR)
+        assert not io.isdir(Test_IO.TEST_FILE)
 
         io.close()
 
@@ -154,7 +158,7 @@ class Test_IO:
         io = self.get_io(target)
 
         files = ['dir1', 'dir2', 'file1', 'file2']
-        assert len(files) == len(io.listdir(context.TEST_DIR))
+        assert len(files) == len(io.listdir(Test_IO.TEST_DIR))
 
         io.close()
 
@@ -182,8 +186,8 @@ class Test_IO:
     def test_touch(self, target):
         io = self.get_io(target)
 
-        io.touch(context.TMP_FILE)
-        assert os.path.isfile(context.TMP_FILE)
+        io.touch(Test_IO.TMP_FILE)
+        assert os.path.isfile(Test_IO.TMP_FILE)
 
         io.close()
 
@@ -191,8 +195,8 @@ class Test_IO:
     def test_exists(self, target):
         io = self.get_io(target)
 
-        assert io.exists(context.TEST_FILE)
-        assert not io.exists(context.TMP_FILE)
+        assert io.exists(Test_IO.TEST_FILE)
+        assert not io.exists(Test_IO.TMP_FILE)
 
         io.close()
 
@@ -200,10 +204,10 @@ class Test_IO:
     def test_remove(self, target):
         io = self.get_io(target)
 
-        open(context.TMP_FILE, 'a').close()
-        assert os.path.exists(context.TMP_FILE)
-        io.remove(context.TMP_FILE)
-        assert not os.path.exists(context.TMP_FILE)
+        open(Test_IO.TMP_FILE, 'a').close()
+        assert os.path.exists(Test_IO.TMP_FILE)
+        io.remove(Test_IO.TMP_FILE)
+        assert not os.path.exists(Test_IO.TMP_FILE)
 
         io.close()
 
@@ -236,8 +240,8 @@ class Test_IO:
         io = self.get_io(target)
 
         msg = 'Hello dups!'
-        with io.open(context.TMP_FILE, 'w') as f:
+        with io.open(Test_IO.TMP_FILE, 'w') as f:
             f.write(msg)
 
-        with open(context.TMP_FILE) as f:
+        with open(Test_IO.TMP_FILE) as f:
             assert msg == f.read()
