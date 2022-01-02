@@ -1,5 +1,5 @@
 import calendar
-import collections
+from collections import abc
 import datetime
 import errno
 import functools
@@ -132,7 +132,7 @@ def dict_merge(defaults, new):
     result = deepcopy(defaults)
 
     for key, val in new.items():
-        if isinstance(val, collections.Mapping):
+        if isinstance(val, abc.Mapping):
             result[key] = dict_merge(result.get(key, {}), val)
         elif isinstance(val, list):
             result[key] = result.get(key, []) + val
@@ -178,6 +178,7 @@ def duration_to_timedelta(duration):
 
 def validate_absolute(func):
     """Decorator which checks if the first argument is a absolute path."""
+
     @functools.wraps(func)
     def wrapper(*args):
         for arg in args:
@@ -238,6 +239,7 @@ def rotate_gffs(datetimes, days=7, weeks=4, months=12, years=3, start=None,
         tuple([list, ...]): 5-tuple
             ([daily], [weekly], [monthly], [yearly], [combined])
     """
+
     def _last_weekday(year, month, weekday_full):
         day = 0
         for i in range(1, 3):
